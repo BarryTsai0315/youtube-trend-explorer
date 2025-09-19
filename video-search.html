@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+    <link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans+TC:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;700;800" onload="this.rel='stylesheet'" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <title>熱門影片即時搜尋 - YouTube 趨勢追蹤分析平台</title>
+    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style type="text/tailwindcss">
+        :root {
+            --primary-color: #ea2a33;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+        }
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        }
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #374151;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .range-slider:hover {
+            opacity: 1;
+        }
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+        }
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .filtering {
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+        .filter-loading {
+            position: relative;
+            overflow: hidden;
+        }
+        .filter-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(234, 42, 51, 0.3), transparent);
+            animation: filterSweep 1s ease-in-out;
+        }
+        @keyframes filterSweep {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+        <div class="flex h-full grow flex-col">
+            <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-800 px-10 py-4">
+                <div class="flex items-center gap-4 text-white">
+                    <a href="index.html" class="flex items-center gap-4 text-white hover:text-gray-300 transition-colors">
+                        <svg class="h-8 w-8 text-[var(--primary-color)]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 15.65v-7.3L16.03 12M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10zM4 12c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8-8 3.58-8 8z"></path>
+                        </svg>
+                        <h1 class="text-xl font-bold tracking-tight">熱門影片即時搜尋</h1>
+                    </a>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <!-- 導航按鈕 -->
+                    <div class="flex items-center gap-2">
+                        <a href="video-search.html" class="px-4 py-2 rounded-lg bg-[var(--primary-color)] text-white font-medium hover:bg-red-700 transition-colors">
+                            <span class="material-symbols-outlined text-sm mr-1">video_library</span>
+                            影片搜尋
+                        </a>
+                        <a href="hashtag-analytics.html" class="px-4 py-2 rounded-lg bg-gray-700 text-gray-300 font-medium hover:bg-gray-600 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-sm mr-1">analytics</span>
+                            Hashtag 統計
+                        </a>
+                        <a href="title-wordcloud.html" class="px-4 py-2 rounded-lg bg-gray-700 text-gray-300 font-medium hover:bg-gray-600 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-sm mr-1">cloud</span>
+                            標題文字雲
+                        </a>
+                    </div>
+
+                    <!-- 資料狀態和操作 -->
+                    <div class="flex items-center gap-4">
+                        <span id="dataCount" class="text-sm text-gray-400">載入中...</span>
+                        <button id="refreshBtn" class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white">
+                            <span class="material-symbols-outlined">refresh</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-7xl">
+                    <!-- 搜尋條件區塊 -->
+                    <div class="mb-8 rounded-lg bg-gray-800/50 p-6 shadow-lg">
+                        <h2 class="text-2xl font-bold tracking-tight text-white mb-6">搜尋條件</h2>
+
+                        <!-- 日期範圍選擇 -->
+                        <div class="mb-6">
+                            <label class="mb-2 text-sm font-medium text-gray-300">日期範圍</label>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="mb-1 text-xs text-gray-400" for="dateFrom">開始日期</label>
+                                    <input type="date" id="dateFrom" class="form-input w-full rounded-md border-gray-700 bg-gray-800 text-white focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]">
+                                </div>
+                                <div>
+                                    <label class="mb-1 text-xs text-gray-400" for="dateTo">結束日期</label>
+                                    <input type="date" id="dateTo" class="form-input w-full rounded-md border-gray-700 bg-gray-800 text-white focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            <!-- 地區選擇 -->
+                            <div class="flex flex-col">
+                                <label class="mb-2 text-sm font-medium text-gray-300" for="regionFilter">地區</label>
+                                <select class="form-select w-full rounded-md border-gray-700 bg-gray-800 text-white focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="regionFilter">
+                                    <option value="">全部</option>
+                                </select>
+                            </div>
+
+                            <!-- 類型選擇 -->
+                            <div class="flex flex-col">
+                                <label class="mb-2 text-sm font-medium text-gray-300" for="typeFilter">類型</label>
+                                <select class="form-select w-full rounded-md border-gray-700 bg-gray-800 text-white focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="typeFilter">
+                                    <option value="">全部</option>
+                                </select>
+                            </div>
+
+                            <!-- 關鍵字搜尋 -->
+                            <div class="flex flex-col">
+                                <label class="mb-2 text-sm font-medium text-gray-300" for="keywordFilter">關鍵字</label>
+                                <input class="form-input w-full rounded-md border-gray-700 bg-gray-800 text-white placeholder-gray-400 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]"
+                                       id="keywordFilter" placeholder="搜尋標題或標籤" type="text"/>
+                            </div>
+
+                            <!-- 搜尋按鈕 -->
+                            <div class="flex items-end">
+                                <button id="searchBtn" class="flex w-full items-center justify-center rounded-md bg-[var(--primary-color)] px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900">
+                                    <span class="material-symbols-outlined mr-2">search</span>
+                                    <span>搜尋</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 觀看數範圍雙滑桿 -->
+                        <div class="mt-6">
+                            <label class="mb-2 text-sm font-medium text-gray-300">觀看數範圍</label>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="mb-1 text-xs text-gray-400" for="viewMin">最小觀看數</label>
+                                    <input type="number" id="viewMin" class="form-input w-full rounded-md border-gray-700 bg-gray-800 text-white focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]"
+                                           placeholder="0" min="0" step="1000">
+                                </div>
+                                <div>
+                                    <label class="mb-1 text-xs text-gray-400" for="viewMax">最大觀看數</label>
+                                    <input type="number" id="viewMax" class="form-input w-full rounded-md border-gray-700 bg-gray-800 text-white focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]"
+                                           placeholder="無上限" min="0" step="1000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 搜尋結果標題 -->
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold tracking-tight text-white">搜尋結果</h2>
+                        <div class="flex items-center gap-3">
+                            <span id="filteringIndicator" class="text-sm text-[var(--primary-color)]" style="display: none;">
+                                <span class="material-symbols-outlined text-sm animate-spin mr-1">autorenew</span>
+                                篩選中...
+                            </span>
+                            <span id="resultCount" class="text-sm text-gray-400">0 個結果</span>
+                        </div>
+                    </div>
+
+                    <!-- 載入指示器 -->
+                    <div id="loadingIndicator" class="flex items-center justify-center py-12">
+                        <span class="material-symbols-outlined text-4xl text-gray-400 loading">hourglass_empty</span>
+                        <span class="ml-2 text-gray-400">載入資料中...</span>
+                    </div>
+
+                    <!-- 影片結果網格 -->
+                    <div id="videoGrid" class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" style="display: none;">
+                    </div>
+
+                    <!-- 無結果提示 -->
+                    <div id="noResults" class="text-center py-12" style="display: none;">
+                        <span class="material-symbols-outlined text-6xl text-gray-600 mb-4">search_off</span>
+                        <p class="text-gray-400 text-lg">沒有找到符合條件的影片</p>
+                    </div>
+
+                    <!-- 分頁功能 -->
+                    <div id="paginationContainer" class="mt-8 flex items-center justify-between" style="display: none;">
+                        <div class="text-sm text-gray-400">
+                            顯示第 <span id="pageInfo">1-50</span> 筆，共 <span id="totalItems">0</span> 筆資料
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="prevPage" class="flex h-8 w-8 items-center justify-center rounded-md bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                            </button>
+                            <div class="flex items-center gap-1" id="pageNumbers">
+                                <!-- 動態生成頁碼 -->
+                            </div>
+                            <button id="nextPage" class="flex h-8 w-8 items-center justify-center rounded-md bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 全域變數
+        let currentData = null;
+        let currentPage = 1;
+        let pageSize = 20;
+        let debounceTimer = null;
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxa4QrXlLKdr9EP9PsskvnLhVwjSgHx8u3sRP6FmSoKGD-NbEHh6wMpQ6rodyAD2GhKhQ/exec'; // 請替換為您的 Apps Script 網址
+
+        // 格式化數字顯示
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        // 格式化時間長度
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 初始化篩選選項
+        function initializeFilterOptions() {
+            const regionSelect = document.getElementById('regionFilter');
+            const typeSelect = document.getElementById('typeFilter');
+
+            // 地區選項
+            regionSelect.innerHTML = '<option value="">全部地區</option>';
+            const regions = [
+                { value: 'TW', text: '台灣' },
+                { value: 'US', text: '美國' },
+                { value: 'IN', text: '印度' },
+                { value: 'BR', text: '巴西' },
+                { value: 'ID', text: '印尼' },
+                { value: 'MX', text: '墨西哥' }
+            ];
+            regions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region.value;
+                option.textContent = region.text;
+                regionSelect.appendChild(option);
+            });
+
+            // 類型選項
+            typeSelect.innerHTML = '<option value="">全部類型</option>';
+            const types = [
+                { value: 'videos', text: '一般影片' },
+                { value: 'shorts', text: 'Shorts 短影片' }
+            ];
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type.value;
+                option.textContent = type.text;
+                typeSelect.appendChild(option);
+            });
+
+            // 設定預設日期範圍（最近7天）
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = weekAgo.toISOString().split('T')[0];
+        }
+
+        // 載入影片資料
+        async function loadVideoData() {
+            // 收集篩選條件
+            const filters = getFilterConditions();
+
+            // 顯示載入狀態
+            showLoading(true);
+
+            try {
+                // 構建 API URL
+                const url = buildFilterURL(filters);
+                console.log('API 請求:', url);
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.total !== undefined) {
+                    currentData = result;
+                    displayResults(result);
+                    updatePagination(result);
+                    updateDataCount(result);
+                } else {
+                    throw new Error(result.error || '載入資料失敗');
+                }
+            } catch (error) {
+                console.error('載入資料失敗:', error);
+                showError('載入資料失敗: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 收集篩選條件
+        function getFilterConditions() {
+            return {
+                dateFrom: document.getElementById('dateFrom').value || null,
+                dateTo: document.getElementById('dateTo').value || null,
+                viewMin: document.getElementById('viewMin').value || null,
+                viewMax: document.getElementById('viewMax').value || null,
+                region: document.getElementById('regionFilter').value || null,
+                type: document.getElementById('typeFilter').value || null,
+                keyword: document.getElementById('keywordFilter').value || null,
+                page: currentPage,
+                size: pageSize
+            };
+        }
+
+        // 構建篩選 API URL
+        function buildFilterURL(filters) {
+            const params = new URLSearchParams();
+            params.append('action', 'filter');
+
+            if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+            if (filters.dateTo) params.append('dateTo', filters.dateTo);
+            if (filters.viewMin) params.append('viewMin', filters.viewMin);
+            if (filters.viewMax) params.append('viewMax', filters.viewMax);
+            if (filters.region) params.append('region', filters.region);
+            if (filters.type) params.append('type', filters.type);
+
+            params.append('page', filters.page);
+            params.append('size', filters.size);
+
+            return `${APPS_SCRIPT_URL}?${params.toString()}`;
+        }
+
+        // 顯示載入狀態
+        function showLoading(isLoading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const videoGrid = document.getElementById('videoGrid');
+            const noResults = document.getElementById('noResults');
+            const paginationContainer = document.getElementById('paginationContainer');
+
+            if (isLoading) {
+                loadingIndicator.style.display = 'flex';
+                videoGrid.style.display = 'none';
+                noResults.style.display = 'none';
+                paginationContainer.style.display = 'none';
+            } else {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // 顯示錯誤
+        function showError(message) {
+            const dataCount = document.getElementById('dataCount');
+            const noResults = document.getElementById('noResults');
+
+            dataCount.textContent = '載入失敗';
+            noResults.style.display = 'block';
+            noResults.querySelector('p').textContent = message;
+        }
+
+        // 顯示結果
+        function displayResults(data) {
+            const videoGrid = document.getElementById('videoGrid');
+            const noResults = document.getElementById('noResults');
+
+            if (data.items && data.items.length > 0) {
+                videoGrid.innerHTML = '';
+                data.items.forEach(video => {
+                    const videoCard = createVideoCard(video);
+                    videoGrid.appendChild(videoCard);
+                });
+                videoGrid.style.display = 'grid';
+                noResults.style.display = 'none';
+            } else {
+                videoGrid.style.display = 'none';
+                noResults.style.display = 'block';
+                noResults.querySelector('p').textContent = '沒有找到符合條件的影片';
+            }
+        }
+
+        // 更新分頁資訊
+        function updatePagination(data) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            const pageInfo = document.getElementById('pageInfo');
+            const totalItems = document.getElementById('totalItems');
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+
+            if (data.total > 0) {
+                const startItem = (data.page - 1) * data.size + 1;
+                const endItem = Math.min(data.page * data.size, data.total);
+
+                pageInfo.textContent = `${startItem}-${endItem}`;
+                totalItems.textContent = data.total;
+
+                prevPage.disabled = data.page <= 1;
+                nextPage.disabled = data.page >= data.totalPages;
+
+                generatePageNumbers(data);
+                paginationContainer.style.display = 'flex';
+            } else {
+                paginationContainer.style.display = 'none';
+            }
+        }
+
+        // 生成頁碼按鈕
+        function generatePageNumbers(data) {
+            const pageNumbers = document.getElementById('pageNumbers');
+            pageNumbers.innerHTML = '';
+
+            const maxPages = Math.min(5, data.totalPages);
+            let startPage = Math.max(1, data.page - 2);
+            let endPage = Math.min(data.totalPages, startPage + maxPages - 1);
+
+            if (endPage - startPage + 1 < maxPages) {
+                startPage = Math.max(1, endPage - maxPages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const button = document.createElement('button');
+                button.className = `flex h-8 w-8 items-center justify-center rounded-md text-sm ${
+                    i === data.page
+                        ? 'bg-[var(--primary-color)] text-white'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                }`;
+                button.textContent = i;
+                button.onclick = () => goToPage(i);
+                pageNumbers.appendChild(button);
+            }
+        }
+
+        // 更新資料計數
+        function updateDataCount(data) {
+            const dataCount = document.getElementById('dataCount');
+            const resultCount = document.getElementById('resultCount');
+
+            dataCount.textContent = `共 ${data.total} 筆資料`;
+            resultCount.textContent = `${data.items.length} 個結果`;
+        }
+
+        // 分頁控制
+        function goToPage(page) {
+            currentPage = page;
+            loadVideoData();
+        }
+
+        function nextPage() {
+            if (currentData && currentPage < currentData.totalPages) {
+                goToPage(currentPage + 1);
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        }
+
+        // 防抖動搜尋
+        function debouncedSearch() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentPage = 1; // 重置到第一頁
+                loadVideoData();
+            }, 300);
+        }
+
+        // 立即搜尋（按鈕觸發）
+        function immediateSearch() {
+            clearTimeout(debounceTimer);
+            currentPage = 1;
+            loadVideoData();
+        }
+
+        // 新的篩選邏輯（使用防抖動）
+        function applyFilters() {
+            debouncedSearch();
+        }
+
+        // 創建影片卡片
+        function createVideoCard(video) {
+            const div = document.createElement('div');
+            div.className = 'group flex flex-col overflow-hidden rounded-lg bg-gray-800/50 shadow-lg transition-transform duration-300 hover:-translate-y-1';
+
+            div.innerHTML = `
+                <div class="relative">
+                    <div class="w-full bg-center bg-no-repeat aspect-video bg-cover bg-gray-700"
+                         style="background-image: url('${video.thumbnails?.medium?.url || 'https://via.placeholder.com/320x180'}');">
+                    </div>
+                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <a href="${video.url}" target="_blank" class="text-white text-5xl hover:text-[var(--primary-color)]">
+                            <span class="material-symbols-outlined text-5xl">play_circle</span>
+                        </a>
+                    </div>
+                    <div class="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                        ${formatDuration(video.durationSeconds)}
+                    </div>
+                </div>
+                <div class="flex flex-1 flex-col p-4">
+                    <h3 class="text-base font-semibold leading-tight text-white mb-2 line-clamp-2">
+                        ${video.title}
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-1">${video.channelTitle}</p>
+                    <p class="text-xs text-gray-500 mb-2">${video.hashtags && video.hashtags.length > 0 ? (Array.isArray(video.hashtags) ? video.hashtags.slice(0, 3).join(' ') : video.hashtags.split(',').slice(0, 3).join(' ')) : ''}</p>
+                    <div class="flex items-center gap-1 mb-3 text-xs text-gray-400">
+                        <span class="material-symbols-outlined text-sm">public</span>
+                        <span>${video.region}</span>
+                        <span class="mx-1">•</span>
+                        <span>${video.type}</span>
+                    </div>
+                    <div class="mt-auto grid grid-cols-3 gap-2 text-xs text-gray-400">
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">visibility</span>
+                            <span>${formatNumber(video.viewCount)}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">thumb_up</span>
+                            <span>${formatNumber(video.likeCount)}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">comment</span>
+                            <span>${formatNumber(video.commentCount)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+
+
+        // 事件監聽器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 檢查是否設定了 Apps Script URL
+            if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+                document.getElementById('dataCount').textContent = '請設定 Apps Script URL';
+                document.getElementById('noResults').style.display = 'block';
+                document.getElementById('noResults').innerHTML = '<p class="text-red-400">請在 JavaScript 中設定您的 Apps Script URL</p>';
+                document.getElementById('loadingIndicator').style.display = 'none';
+                return;
+            }
+
+            // 初始化
+            initializeFilterOptions();
+            loadVideoData();
+
+            // 篩選事件監聽器 - 防抖動
+            document.getElementById('regionFilter').addEventListener('change', debouncedSearch);
+            document.getElementById('typeFilter').addEventListener('change', debouncedSearch);
+            document.getElementById('keywordFilter').addEventListener('input', debouncedSearch);
+            document.getElementById('dateFrom').addEventListener('change', debouncedSearch);
+            document.getElementById('dateTo').addEventListener('change', debouncedSearch);
+            document.getElementById('viewMin').addEventListener('input', debouncedSearch);
+            document.getElementById('viewMax').addEventListener('input', debouncedSearch);
+
+            // 搜尋按鈕 - 立即執行
+            document.getElementById('searchBtn').addEventListener('click', immediateSearch);
+
+            // Enter 鍵搜尋 - 立即執行
+            document.getElementById('keywordFilter').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    immediateSearch();
+                }
+            });
+
+            // 重新整理按鈕
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                currentPage = 1;
+                loadVideoData();
+            });
+
+            // 分頁按鈕
+            document.getElementById('prevPage').addEventListener('click', prevPage);
+            document.getElementById('nextPage').addEventListener('click', nextPage);
+        });
+    </script>
+</body>
+</html>
