@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+    <link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans+TC:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;700;800" onload="this.rel='stylesheet'" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <title>YouTube 熱門影片搜尋器 - 進階版</title>
+    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style type="text/tailwindcss">
+        :root {
+            --primary-color: #ea2a33;
+            --secondary-color: #1f2937;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+        }
+        .search-container {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #374151 100%);
+        }
+        .video-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(234, 42, 51, 0.1);
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .filter-tag {
+            background: rgba(234, 42, 51, 0.1);
+            border: 1px solid rgba(234, 42, 51, 0.3);
+        }
+        .stats-icon {
+            font-size: 16px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- 頂部導航 -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-red-500 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 15.65v-7.3L16.03 12M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10zM4 12c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8-8 3.58-8 8z"></path>
+                    </svg>
+                    <h1 class="text-xl font-bold">YouTube 熱門影片搜尋器</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="apiStatus" class="text-sm text-gray-400">準備就緒</span>
+                    <button id="refreshBtn" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區域 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 搜尋區域 -->
+        <div class="search-container rounded-2xl p-8 mb-8 shadow-2xl">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">探索熱門影片</h2>
+
+            <!-- 主要搜尋欄 -->
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-1">
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="搜尋關鍵字..."
+                        class="w-full px-6 py-4 text-lg bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent backdrop-blur-sm"
+                    />
+                </div>
+                <button
+                    id="searchBtn"
+                    class="px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center min-w-[140px]"
+                >
+                    <span class="material-symbols-outlined mr-2">search</span>
+                    搜尋
+                </button>
+            </div>
+
+            <!-- 進階篩選 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- 地區選擇 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">地區</label>
+                    <select id="regionSelect" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-red-500">
+                        <option value="">全部地區</option>
+                        <option value="TW">台灣</option>
+                        <option value="US">美國</option>
+                        <option value="IN">印度</option>
+                        <option value="BR">巴西</option>
+                        <option value="ID">印尼</option>
+                        <option value="MX">墨西哥</option>
+                    </select>
+                </div>
+
+                <!-- 影片類型 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">類型</label>
+                    <select id="typeSelect" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-red-500">
+                        <option value="">全部類型</option>
+                        <option value="videos">一般影片</option>
+                        <option value="shorts">Shorts 短影片</option>
+                    </select>
+                </div>
+
+                <!-- 日期範圍 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">開始日期</label>
+                    <input type="date" id="dateFrom" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-red-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">結束日期</label>
+                    <input type="date" id="dateTo" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <!-- 觀看數範圍 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">最小觀看數</label>
+                    <input type="number" id="viewMin" placeholder="例: 1000" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">最大觀看數</label>
+                    <input type="number" id="viewMax" placeholder="例: 1000000" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <!-- 搜尋建議 -->
+            <div id="suggestionsContainer" class="hidden">
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="text-sm text-gray-300 mr-2">熱門搜尋:</span>
+                    <div id="suggestions" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果統計 -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <h3 class="text-2xl font-bold text-white">搜尋結果</h3>
+                <div id="resultStats" class="text-gray-400 text-sm"></div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-400">每頁顯示:</span>
+                <select id="pageSizeSelect" class="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:ring-2 focus:ring-red-500">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 載入指示器 -->
+        <div id="loadingIndicator" class="hidden text-center py-12">
+            <div class="inline-flex items-center px-6 py-3 bg-gray-800 rounded-lg">
+                <span class="material-symbols-outlined loading-spinner text-red-500 mr-3">hourglass_empty</span>
+                <span class="text-gray-300">正在搜尋影片...</span>
+            </div>
+        </div>
+
+        <!-- 錯誤訊息 -->
+        <div id="errorMessage" class="hidden bg-red-900/50 border border-red-500 rounded-lg p-4 mb-6">
+            <div class="flex items-center">
+                <span class="material-symbols-outlined text-red-500 mr-3">error</span>
+                <div>
+                    <h4 class="font-semibold text-red-300">搜尋失敗</h4>
+                    <p id="errorText" class="text-red-200 text-sm mt-1"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 影片結果網格 -->
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 mb-8">
+            <!-- 影片卡片將在這裡動態生成 -->
+        </div>
+
+        <!-- 無結果提示 -->
+        <div id="noResults" class="hidden text-center py-16">
+            <span class="material-symbols-outlined text-6xl text-gray-600 mb-4 block">search_off</span>
+            <h3 class="text-xl font-semibold text-gray-400 mb-2">沒有找到相關影片</h3>
+            <p class="text-gray-500">試試調整搜尋條件或關鍵字</p>
+        </div>
+
+        <!-- 分頁控制 -->
+        <div id="paginationContainer" class="hidden flex items-center justify-between bg-gray-800 rounded-lg p-4">
+            <div class="text-sm text-gray-400">
+                顯示第 <span id="pageRange">1-20</span> 筆，共 <span id="totalCount">0</span> 筆結果
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="prevPageBtn" class="p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-700 transition-colors" disabled>
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <div id="pageNumbers" class="flex items-center space-x-1">
+                    <!-- 頁碼按鈕將在這裡生成 -->
+                </div>
+                <button id="nextPageBtn" class="p-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-700 transition-colors">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==================== 驗證檢查 ====================
+
+        // 檢查用戶是否已通過驗證
+        function checkAuthentication() {
+            const authToken = sessionStorage.getItem('ytSearchAuth');
+            const authTime = sessionStorage.getItem('ytSearchTime');
+
+            if (!authToken || !authTime) {
+                // 沒有驗證標記，跳回首頁
+                alert('請先通過驗證才能使用此工具');
+                window.location.href = 'index.html';
+                return false;
+            }
+
+            // 檢查驗證是否過期（24小時）
+            const currentTime = Date.now();
+            const timeDiff = currentTime - parseInt(authTime);
+            const maxAge = 24 * 60 * 60 * 1000; // 24小時
+
+            if (timeDiff > maxAge) {
+                // 驗證過期，清除並跳回首頁
+                sessionStorage.removeItem('ytSearchAuth');
+                sessionStorage.removeItem('ytSearchTime');
+                alert('驗證已過期，請重新驗證');
+                window.location.href = 'index.html';
+                return false;
+            }
+
+            return true;
+        }
+
+        // 頁面載入時檢查驗證
+        if (!checkAuthentication()) {
+            // 如果驗證失敗，停止執行其他代碼
+            throw new Error('Authentication failed');
+        }
+
+        // ==================== 全域變數 ====================
+
+        // API 配置
+        const API_CONFIG = {
+            baseUrl: 'https://script.google.com/macros/s/AKfycbyKgv3S8n7EJY-Gy4KvTfwIJeZfQ3lJkUlsQAunJT7pG6VG0Xk6s9ogAtjI3Z-ilolb/exec',
+            timeout: 15000
+        };
+
+        // 應用程式狀態
+        const appState = {
+            currentPage: 1,
+            pageSize: 20,
+            totalResults: 0,
+            currentFilters: {},
+            searchResults: [],
+            loading: false
+        };
+
+        // DOM 元素引用
+        const elements = {
+            searchInput: document.getElementById('searchInput'),
+            searchBtn: document.getElementById('searchBtn'),
+            regionSelect: document.getElementById('regionSelect'),
+            typeSelect: document.getElementById('typeSelect'),
+            dateFrom: document.getElementById('dateFrom'),
+            dateTo: document.getElementById('dateTo'),
+            viewMin: document.getElementById('viewMin'),
+            viewMax: document.getElementById('viewMax'),
+            pageSizeSelect: document.getElementById('pageSizeSelect'),
+
+            loadingIndicator: document.getElementById('loadingIndicator'),
+            errorMessage: document.getElementById('errorMessage'),
+            errorText: document.getElementById('errorText'),
+            videoGrid: document.getElementById('videoGrid'),
+            noResults: document.getElementById('noResults'),
+
+            resultStats: document.getElementById('resultStats'),
+            paginationContainer: document.getElementById('paginationContainer'),
+            pageRange: document.getElementById('pageRange'),
+            totalCount: document.getElementById('totalCount'),
+            pageNumbers: document.getElementById('pageNumbers'),
+            prevPageBtn: document.getElementById('prevPageBtn'),
+            nextPageBtn: document.getElementById('nextPageBtn'),
+
+            suggestionsContainer: document.getElementById('suggestionsContainer'),
+            suggestions: document.getElementById('suggestions'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            apiStatus: document.getElementById('apiStatus')
+        };
+
+        // ==================== 工具函數 ====================
+
+        /**
+         * 格式化數字顯示
+         */
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toLocaleString();
+        }
+
+        /**
+         * 格式化影片長度
+         */
+        function formatDuration(seconds) {
+            if (!seconds) return '--:--';
+
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        /**
+         * 顯示錯誤訊息
+         */
+        function showError(message) {
+            elements.errorText.textContent = message;
+            elements.errorMessage.classList.remove('hidden');
+            elements.loadingIndicator.classList.add('hidden');
+            updateApiStatus('錯誤', 'text-red-400');
+        }
+
+        /**
+         * 隱藏錯誤訊息
+         */
+        function hideError() {
+            elements.errorMessage.classList.add('hidden');
+        }
+
+        /**
+         * 更新 API 狀態
+         */
+        function updateApiStatus(status, className = 'text-gray-400') {
+            elements.apiStatus.textContent = status;
+            elements.apiStatus.className = `text-sm ${className}`;
+        }
+
+        // ==================== API 呼叫函數 ====================
+
+        /**
+         * 執行搜尋請求
+         */
+        async function performSearch() {
+            if (appState.loading) return;
+
+            try {
+                appState.loading = true;
+                hideError();
+                showLoading(true);
+                updateApiStatus('搜尋中...', 'text-yellow-400');
+
+                // 收集搜尋參數
+                const params = collectSearchParams();
+                appState.currentFilters = params;
+
+                // 決定使用哪個 API
+                const useAdvancedFilter = hasAdvancedFilters(params);
+                const apiAction = useAdvancedFilter ? 'filter' : 'search';
+
+                // 構建 API URL
+                const url = buildApiUrl(apiAction, params);
+                console.log('API Request:', url);
+
+                // 發送請求
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // 處理回應
+                handleSearchResponse(data, useAdvancedFilter);
+                updateApiStatus('搜尋完成', 'text-green-400');
+
+            } catch (error) {
+                console.error('Search error:', error);
+                showError(`搜尋失敗: ${error.message}`);
+            } finally {
+                appState.loading = false;
+                showLoading(false);
+            }
+        }
+
+        /**
+         * 收集搜尋參數
+         */
+        function collectSearchParams() {
+            return {
+                keyword: elements.searchInput.value.trim(),
+                region: elements.regionSelect.value,
+                type: elements.typeSelect.value,
+                dateFrom: elements.dateFrom.value,
+                dateTo: elements.dateTo.value,
+                viewMin: elements.viewMin.value ? parseInt(elements.viewMin.value) : null,
+                viewMax: elements.viewMax.value ? parseInt(elements.viewMax.value) : null,
+                page: appState.currentPage,
+                size: appState.pageSize
+            };
+        }
+
+        /**
+         * 檢查是否有進階篩選條件
+         */
+        function hasAdvancedFilters(params) {
+            return params.dateFrom || params.dateTo ||
+                   params.viewMin !== null || params.viewMax !== null ||
+                   params.region || params.type;
+        }
+
+        /**
+         * 構建 API URL
+         */
+        function buildApiUrl(action, params) {
+            const url = new URL(API_CONFIG.baseUrl);
+
+            if (action === 'filter') {
+                url.searchParams.append('action', 'filter');
+                if (params.keyword) url.searchParams.append('keyword', params.keyword);
+                if (params.region) url.searchParams.append('region', params.region);
+                if (params.type) url.searchParams.append('type', params.type);
+                if (params.dateFrom) url.searchParams.append('dateFrom', params.dateFrom);
+                if (params.dateTo) url.searchParams.append('dateTo', params.dateTo);
+                if (params.viewMin !== null) url.searchParams.append('viewMin', params.viewMin);
+                if (params.viewMax !== null) url.searchParams.append('viewMax', params.viewMax);
+                url.searchParams.append('page', params.page);
+                url.searchParams.append('size', params.size);
+            } else {
+                // 基本搜尋
+                if (params.keyword) url.searchParams.append('q', params.keyword);
+                if (params.region) url.searchParams.append('regionCode', params.region);
+                if (params.type === 'shorts') url.searchParams.append('shorts', 'true');
+                url.searchParams.append('max', params.size);
+                url.searchParams.append('days', '7'); // 預設搜尋 7 天
+            }
+
+            return url;
+        }
+
+        /**
+         * 處理搜尋回應
+         */
+        function handleSearchResponse(data, isAdvancedFilter) {
+            if (isAdvancedFilter) {
+                // 進階篩選回應格式
+                appState.searchResults = data.items || [];
+                appState.totalResults = data.total || 0;
+
+                updateResultStats(data.total, data.page, data.size);
+                updatePagination(data.page, data.totalPages, data.total, data.size);
+            } else {
+                // 基本搜尋回應格式
+                appState.searchResults = data.items || [];
+                appState.totalResults = data.count || 0;
+
+                updateResultStats(data.count, 1, data.count);
+                elements.paginationContainer.classList.add('hidden'); // 基本搜尋不分頁
+            }
+
+            displayResults(appState.searchResults);
+        }
+
+        // ==================== UI 更新函數 ====================
+
+        /**
+         * 顯示載入狀態
+         */
+        function showLoading(show) {
+            if (show) {
+                elements.loadingIndicator.classList.remove('hidden');
+                elements.videoGrid.classList.add('hidden');
+                elements.noResults.classList.add('hidden');
+                elements.paginationContainer.classList.add('hidden');
+            } else {
+                elements.loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 顯示搜尋結果
+         */
+        function displayResults(videos) {
+            elements.videoGrid.innerHTML = '';
+
+            if (!videos || videos.length === 0) {
+                elements.videoGrid.classList.add('hidden');
+                elements.noResults.classList.remove('hidden');
+                return;
+            }
+
+            elements.videoGrid.classList.remove('hidden');
+            elements.noResults.classList.add('hidden');
+
+            videos.forEach(video => {
+                const videoCard = createVideoCard(video);
+                elements.videoGrid.appendChild(videoCard);
+            });
+        }
+
+        /**
+         * 創建影片卡片
+         */
+        function createVideoCard(video) {
+            const card = document.createElement('div');
+            card.className = 'video-card bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300';
+
+            const thumbnailUrl = video.thumbnails?.medium?.url ||
+                                video.thumbnails?.default?.url ||
+                                'https://via.placeholder.com/320x180?text=No+Image';
+
+            const isShorts = video.durationSeconds <= 60;
+            const typeTag = isShorts ?
+                '<span class="bg-red-500 text-white text-xs px-2 py-1 rounded">Shorts</span>' :
+                '<span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">影片</span>';
+
+            card.innerHTML = `
+                <div class="relative group">
+                    <img src="${thumbnailUrl}" alt="${video.title}" class="w-full h-48 object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                        <a href="${video.url}" target="_blank" class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <span class="material-symbols-outlined text-white text-5xl">play_circle</span>
+                        </a>
+                    </div>
+                    <div class="absolute top-2 left-2">
+                        ${typeTag}
+                    </div>
+                    <div class="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                        ${formatDuration(video.durationSeconds)}
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-semibold text-white text-sm leading-tight mb-2 line-clamp-2 h-10">
+                        ${video.title}
+                    </h3>
+                    <p class="text-gray-400 text-xs mb-3 truncate">${video.channelTitle}</p>
+
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                        <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined stats-icon">visibility</span>
+                            <span>${formatNumber(video.viewCount)}</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined stats-icon">thumb_up</span>
+                            <span>${formatNumber(video.likeCount)}</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined stats-icon">comment</span>
+                            <span>${formatNumber(video.commentCount)}</span>
+                        </span>
+                    </div>
+
+                    ${video.hashtags && video.hashtags.length > 0 ? `
+                        <div class="flex flex-wrap gap-1">
+                            ${video.hashtags.slice(0, 3).map(tag =>
+                                `<span class="filter-tag text-xs px-2 py-1 rounded-full text-red-300">${tag}</span>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        /**
+         * 更新結果統計
+         */
+        function updateResultStats(total, page, size) {
+            if (total === 0) {
+                elements.resultStats.textContent = '沒有找到結果';
+            } else {
+                const start = (page - 1) * size + 1;
+                const end = Math.min(page * size, total);
+                elements.resultStats.textContent = `共找到 ${total.toLocaleString()} 個結果`;
+            }
+        }
+
+        /**
+         * 更新分頁控制
+         */
+        function updatePagination(currentPage, totalPages, total, size) {
+            if (totalPages <= 1) {
+                elements.paginationContainer.classList.add('hidden');
+                return;
+            }
+
+            elements.paginationContainer.classList.remove('hidden');
+
+            // 更新頁面資訊
+            const start = (currentPage - 1) * size + 1;
+            const end = Math.min(currentPage * size, total);
+            elements.pageRange.textContent = `${start}-${end}`;
+            elements.totalCount.textContent = total.toLocaleString();
+
+            // 更新按鈕狀態
+            elements.prevPageBtn.disabled = currentPage <= 1;
+            elements.nextPageBtn.disabled = currentPage >= totalPages;
+
+            // 生成頁碼按鈕
+            generatePageNumbers(currentPage, totalPages);
+        }
+
+        /**
+         * 生成頁碼按鈕
+         */
+        function generatePageNumbers(currentPage, totalPages) {
+            elements.pageNumbers.innerHTML = '';
+
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const button = document.createElement('button');
+                button.className = `px-3 py-1 text-sm rounded-lg transition-colors ${
+                    i === currentPage
+                        ? 'bg-red-500 text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`;
+                button.textContent = i;
+                button.onclick = () => goToPage(i);
+                elements.pageNumbers.appendChild(button);
+            }
+        }
+
+        /**
+         * 跳轉到指定頁面
+         */
+        function goToPage(page) {
+            appState.currentPage = page;
+            performSearch();
+        }
+
+        // ==================== 事件處理 ====================
+
+        /**
+         * 初始化事件監聽器
+         */
+        function initializeEventListeners() {
+            // 搜尋相關事件
+            elements.searchBtn.addEventListener('click', () => {
+                appState.currentPage = 1;
+                performSearch();
+            });
+
+            elements.searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    appState.currentPage = 1;
+                    performSearch();
+                }
+            });
+
+            // 移除篩選條件自動搜尋功能，避免浪費 API 調用次數
+            // 使用者需手動點擊搜尋按鈕才會執行搜尋
+
+            // 每頁顯示數量變更（這個保留自動搜尋，因為是在有結果的情況下調整顯示）
+            elements.pageSizeSelect.addEventListener('change', () => {
+                appState.pageSize = parseInt(elements.pageSizeSelect.value);
+                appState.currentPage = 1;
+                // 只有在有搜尋結果時才重新搜尋
+                if (appState.totalResults > 0) {
+                    performSearch();
+                }
+            });
+
+            // 分頁按鈕
+            elements.prevPageBtn.addEventListener('click', () => {
+                if (appState.currentPage > 1) {
+                    goToPage(appState.currentPage - 1);
+                }
+            });
+
+            elements.nextPageBtn.addEventListener('click', () => {
+                goToPage(appState.currentPage + 1);
+            });
+
+            // 重新整理按鈕
+            elements.refreshBtn.addEventListener('click', () => {
+                location.reload();
+            });
+        }
+
+        /**
+         * 初始化預設值
+         */
+        function initializeDefaults() {
+            // 設定預設日期範圍（最近 7 天）
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            elements.dateTo.value = today.toISOString().split('T')[0];
+            elements.dateFrom.value = weekAgo.toISOString().split('T')[0];
+
+            // 檢查 API URL 是否已設定
+            if (API_CONFIG.baseUrl.includes('YOUR_SCRIPT_ID')) {
+                showError('請在程式碼中設定正確的 Google Apps Script URL');
+                updateApiStatus('未設定 API', 'text-red-400');
+                return;
+            }
+
+            updateApiStatus('準備就緒', 'text-green-400');
+        }
+
+        /**
+         * 載入搜尋建議
+         */
+        async function loadSuggestions() {
+            try {
+                const url = new URL(API_CONFIG.baseUrl);
+                url.searchParams.append('action', 'suggestions');
+                url.searchParams.append('type', 'keyword');
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.suggestions && data.suggestions.length > 0) {
+                    displaySuggestions(data.suggestions.slice(0, 8));
+                }
+            } catch (error) {
+                console.error('Failed to load suggestions:', error);
+            }
+        }
+
+        /**
+         * 顯示搜尋建議
+         */
+        function displaySuggestions(suggestions) {
+            elements.suggestions.innerHTML = '';
+
+            suggestions.forEach(suggestion => {
+                const button = document.createElement('button');
+                button.className = 'filter-tag text-xs px-3 py-1 rounded-full text-red-300 hover:bg-red-500 hover:text-white transition-colors';
+                button.textContent = suggestion.text;
+                button.onclick = () => {
+                    elements.searchInput.value = suggestion.text;
+                    performSearch();
+                };
+                elements.suggestions.appendChild(button);
+            });
+
+            elements.suggestionsContainer.classList.remove('hidden');
+        }
+
+        // ==================== 初始化 ====================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('YouTube 搜尋器初始化中...');
+
+            initializeEventListeners();
+            initializeDefaults();
+            loadSuggestions();
+
+            console.log('YouTube 搜尋器初始化完成');
+        });
+    </script>
+</body>
+</html>
