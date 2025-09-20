@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+    <link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans+TC:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;700;800" onload="this.rel='stylesheet'" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <title>YouTube 熱門影片搜尋器 - 競品比較</title>
+    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- YouTube API Utils Module -->
+    <script src="youtube-api-utils.js"></script>
+    <style type="text/tailwindcss">
+        :root {
+            --primary-color: #ea2a33;
+            --secondary-color: #1f2937;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+        }
+        .search-container {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #374151 100%);
+        }
+        .compare-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .compare-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(234, 42, 51, 0.1);
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .chart-container {
+            height: 280px !important;
+            position: relative;
+        }
+        .chart-container canvas {
+            max-height: 100% !important;
+            height: 100% !important;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, rgba(31, 41, 55, 0.8) 0%, rgba(55, 65, 81, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(234, 42, 51, 0.2);
+            transition: all 0.3s ease;
+        }
+        .stats-card:hover {
+            border-color: rgba(234, 42, 51, 0.4);
+            box-shadow: 0 10px 30px rgba(234, 42, 51, 0.1);
+        }
+        .video-item {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .video-item:hover {
+            transform: translateX(8px);
+            background: rgba(55, 65, 81, 0.8) !important;
+        }
+        .result-container {
+            background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(55, 65, 81, 0.9) 100%);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- 頂部導航 -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-red-500 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 15.65v-7.3L16.03 12M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10zM4 12c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8-8 3.58-8 8z"></path>
+                    </svg>
+                    <h1 class="text-xl font-bold">YouTube 熱門影片搜尋器</h1>
+                </div>
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-300 hover:text-white transition-colors flex items-center">
+                        <span class="material-symbols-outlined mr-1 text-sm">home</span>
+                        首頁
+                    </a>
+                    <a href="youtube-search-frontend.html" class="text-gray-300 hover:text-white transition-colors flex items-center">
+                        <span class="material-symbols-outlined mr-1 text-sm">search</span>
+                        影片搜尋
+                    </a>
+                    <a href="compare.html" class="text-white font-medium flex items-center">
+                        <span class="material-symbols-outlined mr-1 text-sm">analytics</span>
+                        競品比較
+                    </a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <span id="apiStatus" class="text-sm text-gray-400">準備就緒</span>
+                    <button id="apiKeyBtn" class="p-2 text-gray-400 hover:text-blue-400 rounded-lg hover:bg-gray-700 transition-colors" title="API Key 設定">
+                        <span class="material-symbols-outlined">key</span>
+                    </button>
+                    <button id="refreshBtn" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                    <button id="logoutBtn" class="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-gray-700 transition-colors" title="登出">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區域 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- 比較搜尋輸入區 -->
+        <div class="search-container rounded-2xl p-8 mb-8 shadow-2xl">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">競品關鍵字比較</h2>
+
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-1">
+                    <label for="compareKeywords" class="block text-sm font-medium text-gray-300 mb-2">
+                        比較關鍵字（用逗號分隔）
+                    </label>
+                    <input
+                        type="text"
+                        id="compareKeywords"
+                        placeholder="例如：iPhone 15, Samsung Galaxy, Google Pixel"
+                        class="w-full px-6 py-4 text-lg bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent backdrop-blur-sm"
+                        value="iPhone 15, Samsung Galaxy"
+                    >
+                </div>
+                <div class="md:w-48">
+                    <label for="regionSelect" class="block text-sm font-medium text-gray-300 mb-2">地區</label>
+                    <select id="regionSelect" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-red-500">
+                        <option value="TW">台灣</option>
+                        <option value="US">美國</option>
+                        <option value="JP">日本</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button
+                    id="compareSearchBtn"
+                    class="px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center min-w-[140px]"
+                >
+                    <span class="material-symbols-outlined mr-2">analytics</span>
+                    開始比較
+                </button>
+            </div>
+        </div>
+
+        <!-- 比較結果容器 -->
+        <div id="compareResults">
+            <!-- 概覽統計 -->
+            <div id="compareStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- 統計卡片將在這裡生成 -->
+            </div>
+
+            <!-- 對比圖表 -->
+            <div class="result-container rounded-2xl p-8 mb-8 shadow-2xl">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <span class="material-symbols-outlined mr-3 text-red-500">analytics</span>
+                    數據對比分析
+                </h3>
+
+                <!-- 並排圖表區域 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 觀看數對比 -->
+                    <div class="compare-card bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <h4 class="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center">
+                            <span class="material-symbols-outlined mr-2 text-blue-400">visibility</span>
+                            平均觀看數對比
+                        </h4>
+                        <div class="chart-container">
+                            <canvas id="viewsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 按讚數對比 -->
+                    <div class="compare-card bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <h4 class="text-lg font-semibold text-white mb-4 text-center flex items-center justify-center">
+                            <span class="material-symbols-outlined mr-2 text-green-400">thumb_up</span>
+                            總按讚數對比
+                        </h4>
+                        <div class="chart-container">
+                            <canvas id="likesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 並排結果 -->
+            <div id="compareGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 每個關鍵字的結果將在這裡生成 -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 初始化 YouTube API Utils
+        function initializeYouTubeApi() {
+            const apiKey = localStorage.getItem('youtubeApiKey');
+            if (!apiKey) {
+                alert('請先設定 YouTube API Key！\n\n請前往主頁面 (index.html) 進行設定。');
+                return null;
+            }
+
+            // 初始化共用 API utils 模組
+            YOUTUBE_API_UTILS.init({ apiKey });
+            return apiKey;
+        }
+
+        const userApiKey = initializeYouTubeApi();
+
+        // DOM 元素
+        const elements = {
+            compareKeywords: document.getElementById('compareKeywords'),
+            regionSelect: document.getElementById('regionSelect'),
+            compareSearchBtn: document.getElementById('compareSearchBtn'),
+            compareResults: document.getElementById('compareResults'),
+            compareStats: document.getElementById('compareStats'),
+            compareGrid: document.getElementById('compareGrid')
+        };
+
+        // 模擬影片數據
+        const mockVideoData = {
+            'iPhone 15': [
+                {
+                    id: 'video1',
+                    snippet: {
+                        title: 'iPhone 15 Pro Max 開箱評測',
+                        thumbnails: {
+                            default: { url: 'https://i.ytimg.com/vi/mock1/default.jpg' }
+                        }
+                    },
+                    statistics: {
+                        viewCount: '1500000',
+                        likeCount: '75000'
+                    }
+                },
+                {
+                    id: 'video2',
+                    snippet: {
+                        title: 'iPhone 15 vs 14 完整比較',
+                        thumbnails: {
+                            default: { url: 'https://i.ytimg.com/vi/mock2/default.jpg' }
+                        }
+                    },
+                    statistics: {
+                        viewCount: '980000',
+                        likeCount: '42000'
+                    }
+                },
+                {
+                    id: 'video3',
+                    snippet: {
+                        title: 'iPhone 15 相機拍攝測試',
+                        thumbnails: {
+                            default: { url: 'https://i.ytimg.com/vi/mock3/default.jpg' }
+                        }
+                    },
+                    statistics: {
+                        viewCount: '750000',
+                        likeCount: '28000'
+                    }
+                }
+            ],
+            'Samsung Galaxy': [
+                {
+                    id: 'video4',
+                    snippet: {
+                        title: 'Samsung Galaxy S24 Ultra 終極評測',
+                        thumbnails: {
+                            default: { url: 'https://i.ytimg.com/vi/mock4/default.jpg' }
+                        }
+                    },
+                    statistics: {
+                        viewCount: '1200000',
+                        likeCount: '65000'
+                    }
+                },
+                {
+                    id: 'video5',
+                    snippet: {
+                        title: 'Galaxy S24 AI 功能深度體驗',
+                        thumbnails: {
+                            default: { url: 'https://i.ytimg.com/vi/mock5/default.jpg' }
+                        }
+                    },
+                    statistics: {
+                        viewCount: '890000',
+                        likeCount: '38000'
+                    }
+                },
+                {
+                    id: 'video6',
+                    snippet: {
+                        title: 'Samsung Galaxy 攝影對比測試',
+                        thumbnails: {
+                            default: { url: 'https://i.ytimg.com/vi/mock6/default.jpg' }
+                        }
+                    },
+                    statistics: {
+                        viewCount: '620000',
+                        likeCount: '22000'
+                    }
+                }
+            ]
+        };
+
+
+
+
+
+        /**
+         * 執行競品比較搜尋
+         */
+        async function performCompareSearch() {
+            const keywords = elements.compareKeywords.value.trim();
+            if (!keywords) {
+                alert('請輸入要比較的關鍵字');
+                return;
+            }
+
+            const keywordList = keywords.split(',').map(k => k.trim()).filter(k => k);
+            if (keywordList.length < 2) {
+                alert('請至少輸入兩個關鍵字進行比較');
+                return;
+            }
+
+            elements.compareSearchBtn.disabled = true;
+            elements.compareSearchBtn.innerHTML = '<span class="material-symbols-outlined loading-spinner mr-2">hourglass_empty</span>比較中...';
+
+            try {
+                const compareData = [];
+
+                // 使用共用 YouTube API Utils 模組
+                for (const keyword of keywordList) {
+                    console.log(`正在搜尋關鍵字: ${keyword}`);
+
+                    try {
+                        // 搜尋影片列表
+                        const searchResults = await YOUTUBE_API_UTILS.searchVideos({
+                            keyword: keyword,
+                            region: elements.regionSelect.value,
+                            size: 10
+                        });
+
+                        if (searchResults.items && searchResults.items.length > 0) {
+                            // 獲取影片詳細資訊
+                            const videoIds = searchResults.items.map(item => item.id.videoId);
+                            const detailResults = await YOUTUBE_API_UTILS.getVideoDetails(videoIds);
+
+                            compareData.push({
+                                keyword: keyword,
+                                videos: detailResults.items || []
+                            });
+                        } else {
+                            compareData.push({
+                                keyword: keyword,
+                                videos: []
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`搜尋關鍵字 "${keyword}" 失敗:`, error);
+                        compareData.push({
+                            keyword: keyword,
+                            videos: [],
+                            error: error.message
+                        });
+                    }
+                }
+
+                console.log('Compare data:', compareData);
+                displayCompareResults(compareData);
+
+            } catch (error) {
+                console.error('比較搜尋失敗:', error);
+                // 使用共用模組的增強錯誤訊息
+                alert(error.message || '比較搜尋失敗，請稍後再試');
+            } finally {
+                elements.compareSearchBtn.disabled = false;
+                elements.compareSearchBtn.innerHTML = '<span class="material-symbols-outlined mr-2">analytics</span>開始比較';
+            }
+        }
+
+        /**
+         * 顯示競品比較結果
+         */
+        function displayCompareResults(compareData) {
+            console.log('Displaying compare results:', compareData);
+            console.log('First video structure:', compareData[0]?.videos[0]);
+
+            // 創建對比圖表
+            createCompareChart(compareData);
+
+            // 生成統計卡片
+            elements.compareStats.innerHTML = compareData.map(data => {
+                if (data.videos.length === 0) {
+                    const errorMessage = data.error ? `錯誤：${data.error}` : '無搜尋結果';
+                    return `
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">${data.keyword}</h4>
+                            <div class="text-sm text-gray-300">
+                                <div>${errorMessage}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const avgViews = data.videos.reduce((sum, v) => sum + parseInt(v.statistics?.viewCount || 0), 0) / data.videos.length;
+                const totalLikes = data.videos.reduce((sum, v) => sum + parseInt(v.statistics?.likeCount || 0), 0);
+
+                return `
+                    <div class="stats-card rounded-xl p-6 shadow-lg">
+                        <h4 class="text-lg font-bold text-white mb-4 flex items-center">
+                            <span class="material-symbols-outlined mr-2 text-red-400">trending_up</span>
+                            ${data.keyword}
+                        </h4>
+                        <div class="space-y-3 text-sm text-gray-300">
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center">
+                                    <span class="material-symbols-outlined mr-2 text-blue-400" style="font-size: 16px;">video_library</span>
+                                    影片數量
+                                </span>
+                                <span class="text-white font-semibold">${data.videos.length}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center">
+                                    <span class="material-symbols-outlined mr-2 text-green-400" style="font-size: 16px;">visibility</span>
+                                    平均觀看
+                                </span>
+                                <span class="text-white font-semibold">${formatNumber(Math.round(avgViews))}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center">
+                                    <span class="material-symbols-outlined mr-2 text-purple-400" style="font-size: 16px;">thumb_up</span>
+                                    總按讚數
+                                </span>
+                                <span class="text-white font-semibold">${formatNumber(totalLikes)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 生成並排結果
+            elements.compareGrid.innerHTML = compareData.map(data => `
+                <div class="result-container rounded-2xl p-6 shadow-lg">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined mr-3 text-red-500">search</span>
+                        ${data.keyword}
+                    </h3>
+                    <div class="space-y-3">
+                        ${data.videos.length === 0 ?
+                            `<div class="text-gray-400 text-center py-8 flex flex-col items-center"><span class="material-symbols-outlined text-4xl mb-2">search_off</span>${data.error ? `錯誤：${data.error}` : '無搜尋結果'}</div>` :
+                            data.videos.slice(0, 5).map(video => `
+                                <div class="video-item flex items-center space-x-3 bg-gray-700 rounded-lg p-3">
+                                    <img src="${video.snippet?.thumbnails?.default?.url || ''}"
+                                         alt="" class="w-16 h-12 rounded object-cover"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                    <div class="w-16 h-12 rounded bg-gray-600 flex items-center justify-center" style="display: none;">
+                                        <span class="material-symbols-outlined text-gray-400">play_circle</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-medium text-white truncate">${video.snippet?.title || '無標題'}</div>
+                                        <div class="flex items-center text-xs text-gray-400 mt-1">
+                                            <span class="material-symbols-outlined mr-1" style="font-size: 12px;">visibility</span>
+                                            ${formatNumber(video.statistics?.viewCount || 0)} 次觀看
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * 創建對比圖表
+         */
+        function createCompareChart(compareData) {
+            // 清除舊圖表
+            if (window.viewsChartInstance) {
+                window.viewsChartInstance.destroy();
+            }
+            if (window.likesChartInstance) {
+                window.likesChartInstance.destroy();
+            }
+
+            const labels = compareData.map(data => data.keyword);
+            const avgViews = compareData.map(data => {
+                if (data.videos.length === 0) return 0;
+                return data.videos.reduce((sum, v) => sum + parseInt(v.statistics?.viewCount || 0), 0) / data.videos.length;
+            });
+            const totalLikes = compareData.map(data => {
+                return data.videos.reduce((sum, v) => sum + parseInt(v.statistics?.likeCount || 0), 0);
+            });
+
+            // 創建觀看數對比圖表
+            const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+            window.viewsChartInstance = new Chart(viewsCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '平均觀看數',
+                        data: avgViews,
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(168, 85, 247, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(168, 85, 247, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${formatNumber(context.parsed.y)} 次觀看`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 創建按讚數對比圖表
+            const likesCtx = document.getElementById('likesChart').getContext('2d');
+            window.likesChartInstance = new Chart(likesCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '總按讚數',
+                        data: totalLikes,
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(236, 72, 153, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(168, 85, 247, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(236, 72, 153, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${formatNumber(context.parsed.y)} 個按讚`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * 格式化數字顯示
+         */
+        function formatNumber(num) {
+            if (!num || isNaN(num)) return '0';
+            const n = parseInt(num);
+            if (n >= 1000000) {
+                return (n / 1000000).toFixed(1) + 'M';
+            } else if (n >= 1000) {
+                return (n / 1000).toFixed(1) + 'K';
+            }
+            return n.toString();
+        }
+
+        // 初始化頁面
+        window.addEventListener('load', () => {
+            console.log('Page loaded, setting up event listeners...');
+
+            // 檢查 API Key
+            if (!userApiKey || !YOUTUBE_API_UTILS.hasApiKey()) {
+                elements.compareSearchBtn.disabled = true;
+                elements.compareSearchBtn.innerHTML = '<span class="material-symbols-outlined mr-2">key</span>請先設定 API Key';
+                document.getElementById('apiStatus').textContent = 'API Key 錯誤';
+                document.getElementById('apiStatus').className = 'text-sm text-red-400';
+                return;
+            } else {
+                document.getElementById('apiStatus').textContent = '準備就緒';
+                document.getElementById('apiStatus').className = 'text-sm text-green-400';
+            }
+
+            // 設置事件監聽器
+            elements.compareSearchBtn.addEventListener('click', (e) => {
+                console.log('Compare button clicked!');
+                e.preventDefault();
+                performCompareSearch();
+            });
+
+            // API Key 設定按鈕
+            document.getElementById('apiKeyBtn').addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+
+            // 刷新按鈕事件監聽器
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                location.reload();
+            });
+
+            // 登出按鈕
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('確定要登出嗎？這會清除您的 API Key 設定。')) {
+                    localStorage.removeItem('youtubeApiKey');
+                    localStorage.removeItem('apiKeySetTime');
+                    alert('已登出，API Key 已清除');
+                    window.location.href = 'index.html';
+                }
+            });
+
+            console.log('頁面已載入，可以開始搜尋！');
+        });
+    </script>
+</body>
+</html>

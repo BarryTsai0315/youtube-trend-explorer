@@ -46,13 +46,12 @@
                     <span class="material-symbols-outlined text-6xl">trending_up</span>
                 </div>
                 <h1 class="text-4xl md:text-6xl font-bold mb-4">
-                    YouTube 熱門影片搜尋器
+                    YouTube 分析工具套件
                 </h1>
                 <p class="text-xl md:text-2xl mb-8 opacity-90">
-                    探索全球熱門影片，掌握最新趨勢
+                    熱門影片搜尋、數據分析、競品比較一站式解決方案
                 </p>
-                <button onclick="showAuthModal()"
-                   class="inline-flex items-center gap-3 bg-white text-gray-800 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
+                <button onclick="startSearch()" class="cta-button inline-flex items-center gap-3 bg-white text-gray-800 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
                     <span class="material-symbols-outlined">play_arrow</span>
                     開始搜尋
                 </button>
@@ -65,10 +64,10 @@
         <div class="container mx-auto px-6">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                    強大的搜尋功能
+                    六大核心功能
                 </h2>
                 <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                    提供多維度篩選和即時搜尋，讓您輕鬆找到想要的影片內容
+                    從搜尋篩選到數據分析，從競品比較到智能匯出，一站式 YouTube 分析解決方案
                 </p>
             </div>
 
@@ -77,9 +76,9 @@
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
                     <div class="text-center">
                         <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">search</span>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-3">智慧搜尋</h3>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">🔍 熱門搜尋</h3>
                         <p class="text-gray-600">
-                            支援關鍵字搜尋，自動提供熱門搜尋建議，快速找到相關影片
+                            多維度篩選：關鍵字、地區、日期、觀看數範圍、Shorts/一般影片篩選
                         </p>
                     </div>
                 </div>
@@ -87,10 +86,10 @@
                 <!-- 功能卡片 2 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
                     <div class="text-center">
-                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">public</span>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-3">多地區支援</h3>
+                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">analytics</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">📊 數據分析</h3>
                         <p class="text-gray-600">
-                            涵蓋台灣、美國、印度、巴西、印尼、墨西哥等 6 個主要地區
+                            Chart.js 圖表視覺化：觀看數分布、發布趨勢、影片類型、按讚率分析
                         </p>
                     </div>
                 </div>
@@ -98,10 +97,10 @@
                 <!-- 功能卡片 3 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
                     <div class="text-center">
-                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">filter_list</span>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-3">進階篩選</h3>
+                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">compare_arrows</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">🏆 競品比較</h3>
                         <p class="text-gray-600">
-                            依日期範圍、觀看數、影片類型等條件篩選，精準定位目標內容
+                            多關鍵字並排比較，競爭強度分析，統計數據對比圖表
                         </p>
                     </div>
                 </div>
@@ -109,10 +108,10 @@
                 <!-- 功能卡片 4 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
                     <div class="text-center">
-                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">short_text</span>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Shorts 支援</h3>
+                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">download</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">💾 CSV 匯出</h3>
                         <p class="text-gray-600">
-                            特別支援 YouTube Shorts 短影片搜尋，掌握短影片趨勢
+                            完整影片數據匯出，支援 UTF-8 編碼，可用 Excel 開啟進一步分析
                         </p>
                     </div>
                 </div>
@@ -120,10 +119,10 @@
                 <!-- 功能卡片 5 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
                     <div class="text-center">
-                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">analytics</span>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-3">詳細數據</h3>
+                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">speed</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">🚀 高效能</h3>
                         <p class="text-gray-600">
-                            顯示觀看數、按讚數、留言數等完整影片數據和熱門標籤
+                            5分鐘智能快取、API 配額管理、錯誤處理最佳化，節省成本
                         </p>
                     </div>
                 </div>
@@ -131,10 +130,10 @@
                 <!-- 功能卡片 6 -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg card-hover">
                     <div class="text-center">
-                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">devices</span>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-3">響應式設計</h3>
+                        <span class="material-symbols-outlined text-5xl feature-icon mb-4 block">security</span>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">🔐 安全私密</h3>
                         <p class="text-gray-600">
-                            完美適配桌面、平板、手機等各種裝置，隨時隨地使用
+                            用戶使用自己的 API Key，數據不上傳第三方，100% 安全私密
                         </p>
                     </div>
                 </div>
@@ -151,11 +150,191 @@
             <p class="text-xl mb-8 opacity-90">
                 免費使用，無需註冊，一鍵即可開始搜尋
             </p>
-            <button onclick="showAuthModal()"
-               class="inline-flex items-center gap-3 bg-white text-gray-800 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
-                <span class="material-symbols-outlined">rocket_launch</span>
-                開始使用
-            </button>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button onclick="startSearch()"
+                   class="inline-flex items-center gap-3 bg-white text-gray-800 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
+                    <span class="material-symbols-outlined">search</span>
+                    影片搜尋
+                </button>
+                <button onclick="startCompare()"
+                   class="inline-flex items-center gap-3 bg-red-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-red-700 transition-colors shadow-lg">
+                    <span class="material-symbols-outlined">analytics</span>
+                    競品比較
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 產品差異化對比 -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                    為什麼選擇我們？
+                </h2>
+                <p class="text-xl text-gray-600 mb-8">
+                    專業級 YouTube 分析工具，從搜尋到分析到匯出的完整解決方案
+                </p>
+
+                <!-- 對比表格 -->
+                <div class="max-w-5xl mx-auto bg-gray-50 rounded-2xl overflow-hidden shadow-lg">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                            <tr>
+                                <th class="py-4 px-6 text-left font-semibold">功能比較</th>
+                                <th class="py-4 px-6 text-center font-semibold">
+                                    <div class="flex flex-col items-center">
+                                        <span class="material-symbols-outlined text-2xl mb-1">trending_up</span>
+                                        我們的工具
+                                    </div>
+                                </th>
+                                <th class="py-4 px-6 text-center font-semibold">
+                                    <div class="flex flex-col items-center">
+                                        <span class="material-symbols-outlined text-2xl mb-1">youtube_activity</span>
+                                        YouTube 原生
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-6 font-medium text-gray-800">統計數據並排顯示</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">觀看/按讚/留言數一目瞭然</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">需逐一點擊查看</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 bg-white">
+                                <td class="py-4 px-6 font-medium text-gray-800">觀看數範圍篩選</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">精確設定數值範圍</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">無此功能</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-6 font-medium text-gray-800">跨地區搜尋</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">一鍵切換 6 個國家地區</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">需 VPN 或改帳號設定</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 bg-white">
+                                <td class="py-4 px-6 font-medium text-gray-800">Shorts 獨立篩選</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">可專門搜尋或排除 Shorts</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">混合顯示難以區分</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-6 font-medium text-gray-800">精確日期範圍</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">自訂具體開始結束日期</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-orange-500 text-xl">⚠️</span>
+                                    <p class="text-sm text-gray-600 mt-1">僅「今日/本週/本月」</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-6 font-medium text-gray-800">數據匯出分析</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">CSV 完整匯出，Excel 直接開啟</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">無批量匯出功能</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 bg-white">
+                                <td class="py-4 px-6 font-medium text-gray-800">圖表視覺化分析</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">4種圖表+數據洞察</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">無圖表分析功能</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-4 px-6 font-medium text-gray-800">競品比較分析</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">多關鍵字並排對比圖表</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">需手動切換比較</p>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 bg-white">
+                                <td class="py-4 px-6 font-medium text-gray-800">智能快取節費</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">5分鐘快取，節省API費用</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-red-500 text-xl">❌</span>
+                                    <p class="text-sm text-gray-600 mt-1">無快取機制</p>
+                                </td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="py-4 px-6 font-medium text-gray-800">隱私安全保護</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                    <p class="text-sm text-gray-600 mt-1">用戶自有API Key，100%隱私</p>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="text-orange-500 text-xl">⚠️</span>
+                                    <p class="text-sm text-gray-600 mt-1">需登入Google帳號</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 目標用戶群 -->
+            <div class="grid md:grid-cols-4 gap-6 mt-16">
+                <div class="text-center p-6 bg-blue-50 rounded-xl">
+                    <span class="material-symbols-outlined text-4xl text-blue-600 mb-3 block">create</span>
+                    <h3 class="font-semibold text-gray-800 mb-2">內容創作者</h3>
+                    <p class="text-sm text-gray-600">研究競品、尋找靈感、分析熱門趨勢</p>
+                </div>
+                <div class="text-center p-6 bg-green-50 rounded-xl">
+                    <span class="material-symbols-outlined text-4xl text-green-600 mb-3 block">campaign</span>
+                    <h3 class="font-semibold text-gray-800 mb-2">行銷人員</h3>
+                    <p class="text-sm text-gray-600">競品分析、市場調研、趨勢追蹤</p>
+                </div>
+                <div class="text-center p-6 bg-purple-50 rounded-xl">
+                    <span class="material-symbols-outlined text-4xl text-purple-600 mb-3 block">science</span>
+                    <h3 class="font-semibold text-gray-800 mb-2">研究人員</h3>
+                    <p class="text-sm text-gray-600">社群媒體研究、數據收集分析</p>
+                </div>
+                <div class="text-center p-6 bg-orange-50 rounded-xl">
+                    <span class="material-symbols-outlined text-4xl text-orange-600 mb-3 block">trending_up</span>
+                    <h3 class="font-semibold text-gray-800 mb-2">投資分析師</h3>
+                    <p class="text-sm text-gray-600">了解市場熱度、內容趨勢變化</p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -176,24 +355,24 @@
                     <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                         1
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">輸入關鍵字</h3>
-                    <p class="text-gray-600">在搜尋框輸入您想要搜尋的關鍵字，或點擊熱門搜尋建議</p>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">設定 YouTube API Key</h3>
+                    <p class="text-gray-600">申請免費的 YouTube Data API Key，享受每日 10,000 次查詢配額</p>
                 </div>
 
                 <div class="text-center">
                     <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                         2
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">設定篩選條件</h3>
-                    <p class="text-gray-600">選擇地區、影片類型、日期範圍等篩選條件，精準定位目標</p>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">設定搜尋條件</h3>
+                    <p class="text-gray-600">選擇關鍵字、地區、影片類型、日期範圍、觀看數範圍等條件</p>
                 </div>
 
                 <div class="text-center">
                     <div class="w-16 h-16 bg-gradient-to-r from-pink-500 to-red-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                         3
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">瀏覽搜尋結果</h3>
-                    <p class="text-gray-600">查看詳細的影片資訊，包含觀看數、按讚數等數據</p>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">分析與匯出</h3>
+                    <p class="text-gray-600">瀏覽詳細統計資料，並匯出為 CSV 進行進一步分析</p>
                 </div>
             </div>
         </div>
@@ -209,7 +388,7 @@
                         <h3 class="text-xl font-bold">YouTube 熱門影片搜尋器</h3>
                     </div>
                     <p class="text-gray-400">
-                        基於 Google Apps Script 和 YouTube Data API 建立的強大搜尋工具
+                        專為內容分析而生的 YouTube 搜尋工具，支援用戶自有 API Key
                     </p>
                 </div>
 
@@ -224,12 +403,12 @@
                 </div>
 
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">技術規格</h4>
+                    <h4 class="text-lg font-semibold mb-4">文件資源</h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li>• YouTube Data API v3</li>
-                        <li>• Google Apps Script</li>
-                        <li>• 現代化網頁技術</li>
-                        <li>• 智慧快取機制</li>
+                        <li><a href="./docs/beginner_guide.html" class="hover:text-white transition-colors">• 新手指南</a></li>
+                        <li><a href="./docs/developer_guide.html" class="hover:text-white transition-colors">• 開發者指南</a></li>
+                        <li><a href="./docs/deployment.html" class="hover:text-white transition-colors">• 部署指南</a></li>
+                        <li><a href="./docs/note.html" class="hover:text-white transition-colors">• 開發筆記</a></li>
                     </ul>
                 </div>
             </div>
@@ -244,133 +423,255 @@
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
             <!-- 關閉按鈕 -->
-            <button onclick="hideAuthModal()"
+            <button onclick="hideApiKeyModal()"
                     class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">
                 <span class="material-symbols-outlined">close</span>
             </button>
 
             <!-- Modal 內容 -->
             <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="material-symbols-outlined text-white text-3xl">lock</span>
+                <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-white text-3xl">key</span>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">存取驗證</h3>
-                <p class="text-gray-600">此工具需要驗證後才能使用</p>
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">設定 YouTube API Key</h3>
+                <p class="text-gray-600">使用你自己的 YouTube API Key，免費且配額獨立</p>
             </div>
 
-            <!-- 密碼輸入 -->
-            <form onsubmit="checkAuth(event)" class="space-y-4">
+            <!-- API Key 輸入 -->
+            <form onsubmit="setupApiKey(event)" class="space-y-4">
                 <div>
-                    <label for="authPassword" class="block text-sm font-medium text-gray-700 mb-2">
-                        請輸入存取密碼
+                    <label for="youtubeApiKey" class="block text-sm font-medium text-gray-700 mb-2">
+                        YouTube Data API v3 Key
                     </label>
-                    <input type="password"
-                           id="authPassword"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                           placeholder="輸入密碼..."
+                    <input type="text"
+                           id="youtubeApiKey"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none font-mono text-sm"
+                           placeholder="AIzaSyD..."
                            required>
+                    <p class="text-xs text-gray-500 mt-1">
+                        格式：AIzaSy... (39個字元)
+                    </p>
                 </div>
 
                 <!-- 錯誤訊息 -->
-                <div id="authError" class="text-red-500 text-sm hidden">
+                <div id="apiKeyError" class="text-red-500 text-sm hidden">
                     <span class="material-symbols-outlined text-base mr-1">error</span>
-                    密碼錯誤，請重新輸入
+                    <span id="apiKeyErrorText">API Key 無效，請檢查格式</span>
+                </div>
+
+                <!-- 載入狀態 -->
+                <div id="apiKeyLoading" class="text-blue-500 text-sm hidden">
+                    <span class="material-symbols-outlined text-base mr-1 animate-spin">hourglass_empty</span>
+                    正在驗證 API Key...
                 </div>
 
                 <!-- 提交按鈕 -->
-                <button type="submit"
-                        class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all">
-                    <span class="material-symbols-outlined mr-2">login</span>
-                    驗證並進入
+                <button type="submit" id="setupApiKeyBtn"
+                        class="w-full bg-gradient-to-r from-red-500 to-pink-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-red-600 hover:to-pink-700 transition-all">
+                    <span class="material-symbols-outlined mr-2">save</span>
+                    保存並開始使用
                 </button>
             </form>
 
-            <!-- 提示訊息 -->
-            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                <p class="text-sm text-gray-600">
-                    <span class="material-symbols-outlined text-base mr-1">info</span>
-                    這是一個私人工具，需要密碼驗證以保護 API 使用額度
+            <!-- API Key 申請指南 -->
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-semibold text-blue-800 mb-2 flex items-center">
+                    <span class="material-symbols-outlined mr-1">help</span>
+                    如何申請 YouTube API Key？
+                </h4>
+                <ol class="text-sm text-blue-700 space-y-1">
+                    <li>1. 前往 <a href="https://console.cloud.google.com/" target="_blank" class="underline font-medium">Google Cloud Console</a></li>
+                    <li>2. 建立新專案或選擇現有專案</li>
+                    <li>3. 啟用「YouTube Data API v3」</li>
+                    <li>4. 建立憑證 → API 金鑰</li>
+                    <li>5. 複製 API Key 貼到上方</li>
+                </ol>
+                <p class="text-xs text-blue-600 mt-2">
+                    <span class="material-symbols-outlined text-sm mr-1">info</span>
+                    免費配額每日 10,000 units，一般使用綽綽有餘
                 </p>
             </div>
         </div>
     </div>
 
     <script>
-        // 設定您的密碼（建議使用複雜一點的密碼）
-        const ACCESS_PASSWORD = 'barry2025!'; // 請修改為您想要的密碼
-
-        // 簡單的密碼加密函數
-        function simpleHash(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // 轉為32位整數
+        // YouTube API 配置
+        const YOUTUBE_API_CONFIG = {
+            baseUrl: 'https://www.googleapis.com/youtube/v3',
+            quotaUnits: {
+                search: 100,        // 每次搜尋消耗 100 units
+                videos: 1           // 每個影片詳情查詢消耗 1 unit
             }
-            return Math.abs(hash).toString(16);
-        }
+        };
 
-        // 顯示驗證 modal
-        function showAuthModal() {
-            document.getElementById('authModal').classList.remove('hidden');
-            document.getElementById('authPassword').focus();
-        }
+        // API Key 管理函數
+        class ApiKeyManager {
+            static getStoredApiKey() {
+                return localStorage.getItem('youtubeApiKey');
+            }
 
-        // 隱藏驗證 modal
-        function hideAuthModal() {
-            document.getElementById('authModal').classList.add('hidden');
-            document.getElementById('authPassword').value = '';
-            document.getElementById('authError').classList.add('hidden');
-        }
+            static saveApiKey(apiKey) {
+                localStorage.setItem('youtubeApiKey', apiKey);
+                localStorage.setItem('apiKeySetTime', Date.now().toString());
+            }
 
-        // 檢查密碼並進入搜尋頁面
-        function checkAuth(event) {
-            event.preventDefault();
+            static clearApiKey() {
+                localStorage.removeItem('youtubeApiKey');
+                localStorage.removeItem('apiKeySetTime');
+            }
 
-            const inputPassword = document.getElementById('authPassword').value;
-            const errorDiv = document.getElementById('authError');
+            static validateApiKeyFormat(apiKey) {
+                // YouTube API Key 格式：AIzaSy... (39個字元)
+                const pattern = /^AIza[0-9A-Za-z_-]{35}$/;
+                return pattern.test(apiKey);
+            }
 
-            // 驗證密碼
-            if (inputPassword === ACCESS_PASSWORD) {
-                // 密碼正確，設定 session 標記
-                const timestamp = Date.now();
-                const authToken = simpleHash(ACCESS_PASSWORD + timestamp);
+            static async testApiKey(apiKey) {
+                try {
+                    const testUrl = `${YOUTUBE_API_CONFIG.baseUrl}/search?part=snippet&q=test&maxResults=1&key=${apiKey}`;
+                    const response = await fetch(testUrl);
+                    const data = await response.json();
 
-                sessionStorage.setItem('ytSearchAuth', authToken);
-                sessionStorage.setItem('ytSearchTime', timestamp);
-
-                // 成功訊息
-                errorDiv.classList.add('hidden');
-
-                // 短暫延遲後跳轉，讓用戶看到成功狀態
-                setTimeout(() => {
-                    window.location.href = 'youtube-search-frontend.html';
-                }, 500);
-
-            } else {
-                // 密碼錯誤
-                errorDiv.classList.remove('hidden');
-                document.getElementById('authPassword').value = '';
-                document.getElementById('authPassword').focus();
-
-                // 震動效果（如果裝置支援）
-                if (navigator.vibrate) {
-                    navigator.vibrate(200);
+                    if (response.ok && data.items) {
+                        return { valid: true };
+                    } else {
+                        return {
+                            valid: false,
+                            error: data.error?.message || 'API Key 無效'
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        valid: false,
+                        error: '網路錯誤，請檢查連線'
+                    };
                 }
             }
         }
 
-        // 按 ESC 關閉 modal
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                hideAuthModal();
+        // 顯示 API Key 設定 Modal
+        function showApiKeyModal() {
+            document.getElementById('authModal').classList.remove('hidden');
+            document.getElementById('youtubeApiKey').focus();
+        }
+
+        // 隱藏 API Key 設定 Modal
+        function hideApiKeyModal() {
+            document.getElementById('authModal').classList.add('hidden');
+            document.getElementById('youtubeApiKey').value = '';
+            hideApiKeyError();
+            hideApiKeyLoading();
+        }
+
+        // 顯示錯誤訊息
+        function showApiKeyError(message) {
+            const errorDiv = document.getElementById('apiKeyError');
+            const errorText = document.getElementById('apiKeyErrorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        // 隱藏錯誤訊息
+        function hideApiKeyError() {
+            document.getElementById('apiKeyError').classList.add('hidden');
+        }
+
+        // 顯示載入狀態
+        function showApiKeyLoading() {
+            document.getElementById('apiKeyLoading').classList.remove('hidden');
+            document.getElementById('setupApiKeyBtn').disabled = true;
+        }
+
+        // 隱藏載入狀態
+        function hideApiKeyLoading() {
+            document.getElementById('apiKeyLoading').classList.add('hidden');
+            document.getElementById('setupApiKeyBtn').disabled = false;
+        }
+
+        // 設定並驗證 API Key
+        async function setupApiKey(event) {
+            event.preventDefault();
+
+            const apiKey = document.getElementById('youtubeApiKey').value.trim();
+
+            hideApiKeyError();
+
+            // 1. 格式驗證
+            if (!ApiKeyManager.validateApiKeyFormat(apiKey)) {
+                showApiKeyError('API Key 格式不正確，應為 AIzaSy... (39個字元)');
+                return;
+            }
+
+            // 2. 實際驗證
+            showApiKeyLoading();
+            const testResult = await ApiKeyManager.testApiKey(apiKey);
+            hideApiKeyLoading();
+
+            if (testResult.valid) {
+                // API Key 有效，保存並跳轉
+                ApiKeyManager.saveApiKey(apiKey);
+
+                // 成功提示
+                const button = document.getElementById('setupApiKeyBtn');
+                button.innerHTML = '<span class="material-symbols-outlined mr-2">check</span>設定成功！';
+                button.classList.add('bg-green-500');
+
+                setTimeout(() => {
+                    window.location.href = 'youtube-search-frontend.html';
+                }, 1000);
+
+            } else {
+                showApiKeyError(testResult.error);
+            }
+        }
+
+        // 開始搜尋按鈕點擊事件
+        function startSearch() {
+            const storedApiKey = ApiKeyManager.getStoredApiKey();
+
+            if (storedApiKey) {
+                // 已有 API Key，直接進入搜尋頁面
+                window.location.href = 'youtube-search-frontend.html';
+            } else {
+                // 沒有 API Key，顯示設定 Modal
+                showApiKeyModal();
+            }
+        }
+
+        function startCompare() {
+            const storedApiKey = ApiKeyManager.getStoredApiKey();
+
+            if (storedApiKey) {
+                // 已有 API Key，直接進入競品比較頁面
+                window.location.href = 'compare.html';
+            } else {
+                // 沒有 API Key，顯示設定 Modal
+                showApiKeyModal();
+            }
+        }
+
+        // 頁面載入時檢查 API Key 狀態
+        document.addEventListener('DOMContentLoaded', function() {
+            const storedApiKey = ApiKeyManager.getStoredApiKey();
+            const startBtn = document.querySelector('.cta-button');
+
+            if (storedApiKey && startBtn) {
+                // 已設定 API Key，更新按鈕文字
+                startBtn.innerHTML = '<span class="material-symbols-outlined mr-2">search</span>開始搜尋';
             }
         });
 
-        // 點擊 modal 背景關閉
-        document.getElementById('authModal').addEventListener('click', (event) => {
-            if (event.target.id === 'authModal') {
-                hideAuthModal();
+        // 點擊 Modal 外部關閉
+        document.getElementById('authModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideApiKeyModal();
+            }
+        });
+
+        // ESC 鍵關閉 Modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideApiKeyModal();
             }
         });
     </script>

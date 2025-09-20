@@ -9,6 +9,10 @@
     <title>YouTube 熱門影片搜尋器 - 進階版</title>
     <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- YouTube API Utils Module -->
+    <script src="youtube-api-utils.js"></script>
     <style type="text/tailwindcss">
         :root {
             --primary-color: #ea2a33;
@@ -35,6 +39,17 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* 圖表容器固定高度 */
+        .chart-container {
+            height: 256px !important;
+            position: relative;
+        }
+
+        .chart-container canvas {
+            max-height: 100% !important;
+            height: 100% !important;
+        }
         .filter-tag {
             background: rgba(234, 42, 51, 0.1);
             border: 1px solid rgba(234, 42, 51, 0.3);
@@ -58,10 +73,30 @@
                     </svg>
                     <h1 class="text-xl font-bold">YouTube 熱門影片搜尋器</h1>
                 </div>
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-300 hover:text-white transition-colors flex items-center">
+                        <span class="material-symbols-outlined mr-1 text-sm">home</span>
+                        首頁
+                    </a>
+                    <a href="youtube-search-frontend.html" class="text-white font-medium flex items-center">
+                        <span class="material-symbols-outlined mr-1 text-sm">search</span>
+                        影片搜尋
+                    </a>
+                    <a href="compare.html" class="text-gray-300 hover:text-white transition-colors flex items-center">
+                        <span class="material-symbols-outlined mr-1 text-sm">analytics</span>
+                        競品比較
+                    </a>
+                </nav>
                 <div class="flex items-center space-x-4">
                     <span id="apiStatus" class="text-sm text-gray-400">準備就緒</span>
+                    <button id="apiKeyBtn" class="p-2 text-gray-400 hover:text-blue-400 rounded-lg hover:bg-gray-700 transition-colors" title="API Key 設定">
+                        <span class="material-symbols-outlined">key</span>
+                    </button>
                     <button id="refreshBtn" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors">
                         <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                    <button id="logoutBtn" class="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-gray-700 transition-colors" title="登出">
+                        <span class="material-symbols-outlined">logout</span>
                     </button>
                 </div>
             </div>
@@ -119,7 +154,10 @@
                     </select>
                 </div>
 
-                <!-- 日期範圍 -->
+            </div>
+
+            <!-- 日期範圍 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">開始日期</label>
                     <input type="date" id="dateFrom" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-red-500">
@@ -158,13 +196,22 @@
                 <h3 class="text-2xl font-bold text-white">搜尋結果</h3>
                 <div id="resultStats" class="text-gray-400 text-sm"></div>
             </div>
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-400">每頁顯示:</span>
-                <select id="pageSizeSelect" class="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:ring-2 focus:ring-red-500">
-                    <option value="10">10</option>
-                    <option value="20" selected>20</option>
-                    <option value="50">50</option>
-                </select>
+            <div class="flex items-center space-x-4">
+                <!-- 匯出按鈕 -->
+                <div id="exportSection" class="hidden">
+                    <button id="exportBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2">
+                        <span class="material-symbols-outlined text-sm">download</span>
+                        <span>匯出 CSV</span>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-400">每頁顯示:</span>
+                    <select id="pageSizeSelect" class="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:ring-2 focus:ring-red-500">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -187,10 +234,109 @@
             </div>
         </div>
 
+        <!-- 檢視模式切換 -->
+        <div id="viewModeSection" class="hidden mb-6">
+            <div class="flex items-center justify-center space-x-4 bg-gray-800 rounded-lg p-2">
+                <button id="gridViewBtn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md transition-colors">
+                    <span class="material-symbols-outlined mr-1 text-sm">grid_view</span>
+                    網格檢視
+                </button>
+                <button id="chartViewBtn" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md transition-colors">
+                    <span class="material-symbols-outlined mr-1 text-sm">analytics</span>
+                    圖表分析
+                </button>
+            </div>
+        </div>
+
+        <!-- 結果排序控件 -->
+        <div id="sortControls" class="hidden mb-4 flex items-center justify-between bg-gray-800 rounded-lg p-4">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium text-gray-300">排序依據:</label>
+                    <select id="sortBySelect" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-2 focus:ring-red-500">
+                        <option value="relevance">相關性</option>
+                        <option value="viewCount">觀看數</option>
+                        <option value="likeCount">按讚數</option>
+                        <option value="commentCount">留言數</option>
+                        <option value="publishedAt">發布日期</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium text-gray-300">排序:</label>
+                    <select id="sortOrderSelect" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-2 focus:ring-red-500">
+                        <option value="desc">降序</option>
+                        <option value="asc">升序</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <!-- 影片結果網格 -->
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 mb-8">
             <!-- 影片卡片將在這裡動態生成 -->
         </div>
+
+        <!-- 圖表分析檢視 -->
+        <div id="chartView" class="hidden mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 觀看數分布圖 -->
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined mr-2">bar_chart</span>
+                        觀看數分布
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="viewCountChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 發布時間趨勢圖 -->
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined mr-2">trending_up</span>
+                        發布時間趨勢
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="publishTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 影片類型分布 -->
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined mr-2">pie_chart</span>
+                        影片類型分布
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="videoTypeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 按讚率分析 -->
+                <div class="bg-gray-800 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined mr-2">scatter_plot</span>
+                        按讚率 vs 觀看數
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="engagementChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 圖表洞察 -->
+            <div id="chartInsights" class="bg-gray-800 rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <span class="material-symbols-outlined mr-2">lightbulb</span>
+                    數據洞察
+                </h3>
+                <div id="insightsList" class="space-y-3">
+                    <!-- 洞察內容將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+
 
         <!-- 無結果提示 -->
         <div id="noResults" class="hidden text-center py-16">
@@ -219,50 +365,43 @@
     </main>
 
     <script>
-        // ==================== 驗證檢查 ====================
+        // ==================== API Key 檢查 ====================
 
-        // 檢查用戶是否已通過驗證
-        function checkAuthentication() {
-            const authToken = sessionStorage.getItem('ytSearchAuth');
-            const authTime = sessionStorage.getItem('ytSearchTime');
+        // 登出功能（清除 API Key）
+        function logout() {
+            if (confirm('確定要登出嗎？這會清除您的 API Key 設定。')) {
+                localStorage.removeItem('youtubeApiKey');
+                localStorage.removeItem('apiKeySetTime');
+                alert('已登出，API Key 已清除');
+                window.location.href = 'index.html';
+            }
+        }
 
-            if (!authToken || !authTime) {
-                // 沒有驗證標記，跳回首頁
-                alert('請先通過驗證才能使用此工具');
+        // 檢查用戶是否已設定 API Key
+        function checkApiKey() {
+            const apiKey = localStorage.getItem('youtubeApiKey');
+
+            if (!apiKey) {
+                alert('請先設定 YouTube API Key 才能使用此工具');
                 window.location.href = 'index.html';
                 return false;
             }
 
-            // 檢查驗證是否過期（24小時）
-            const currentTime = Date.now();
-            const timeDiff = currentTime - parseInt(authTime);
-            const maxAge = 24 * 60 * 60 * 1000; // 24小時
-
-            if (timeDiff > maxAge) {
-                // 驗證過期，清除並跳回首頁
-                sessionStorage.removeItem('ytSearchAuth');
-                sessionStorage.removeItem('ytSearchTime');
-                alert('驗證已過期，請重新驗證');
-                window.location.href = 'index.html';
-                return false;
-            }
-
-            return true;
+            return apiKey;
         }
 
-        // 頁面載入時檢查驗證
-        if (!checkAuthentication()) {
-            // 如果驗證失敗，停止執行其他代碼
-            throw new Error('Authentication failed');
+        // 頁面載入時檢查 API Key
+        const userApiKey = checkApiKey();
+        if (!userApiKey) {
+            throw new Error('API Key not found');
         }
+
+        // 初始化 YouTube API Utils
+        YOUTUBE_API_UTILS.init({
+            apiKey: userApiKey
+        });
 
         // ==================== 全域變數 ====================
-
-        // API 配置
-        const API_CONFIG = {
-            baseUrl: 'https://script.google.com/macros/s/AKfycbyKgv3S8n7EJY-Gy4KvTfwIJeZfQ3lJkUlsQAunJT7pG6VG0Xk6s9ogAtjI3Z-ilolb/exec',
-            timeout: 15000
-        };
 
         // 應用程式狀態
         const appState = {
@@ -280,6 +419,8 @@
             searchBtn: document.getElementById('searchBtn'),
             regionSelect: document.getElementById('regionSelect'),
             typeSelect: document.getElementById('typeSelect'),
+            sortBySelect: document.getElementById('sortBySelect'),
+            sortOrderSelect: document.getElementById('sortOrderSelect'),
             dateFrom: document.getElementById('dateFrom'),
             dateTo: document.getElementById('dateTo'),
             viewMin: document.getElementById('viewMin'),
@@ -303,8 +444,607 @@
             suggestionsContainer: document.getElementById('suggestionsContainer'),
             suggestions: document.getElementById('suggestions'),
             refreshBtn: document.getElementById('refreshBtn'),
-            apiStatus: document.getElementById('apiStatus')
+            apiStatus: document.getElementById('apiStatus'),
+            apiKeyBtn: document.getElementById('apiKeyBtn'),
+            logoutBtn: document.getElementById('logoutBtn'),
+
+            exportSection: document.getElementById('exportSection'),
+            exportBtn: document.getElementById('exportBtn'),
+
+            viewModeSection: document.getElementById('viewModeSection'),
+            gridViewBtn: document.getElementById('gridViewBtn'),
+            chartViewBtn: document.getElementById('chartViewBtn'),
+            chartView: document.getElementById('chartView'),
+            insightsList: document.getElementById('insightsList'),
+            sortControls: document.getElementById('sortControls')
         };
+
+        // ==================== CSV 匯出功能 ====================
+
+        /**
+         * 將搜尋結果匯出為 CSV
+         */
+        function exportToCSV() {
+            if (!appState.searchResults || appState.searchResults.length === 0) {
+                alert('沒有可匯出的搜尋結果');
+                return;
+            }
+
+            try {
+                // 1. 準備 CSV 標頭
+                const headers = [
+                    '影片標題',
+                    '頻道名稱',
+                    '影片ID',
+                    'YouTube連結',
+                    '發布日期',
+                    '影片長度(秒)',
+                    '觀看數',
+                    '按讚數',
+                    '留言數',
+                    '按讚率(%)',
+                    '影片類型',
+                    'Hashtags',
+                    '搜尋關鍵字',
+                    '搜尋地區',
+                    '匯出時間',
+                    '搜尋條件'
+                ];
+
+                // 2. 準備搜尋條件摘要
+                const searchSummary = generateSearchSummary();
+                const exportTime = new Date().toLocaleString('zh-TW');
+
+                // 3. 轉換數據為 CSV 行
+                const csvRows = appState.searchResults.map(video => {
+                    const likeRate = video.viewCount > 0 ?
+                        ((video.likeCount / video.viewCount) * 100).toFixed(2) : '0.00';
+
+                    const videoType = video.durationSeconds <= 60 ? 'Shorts' : '一般影片';
+
+                    const hashtags = video.hashtags ? video.hashtags.join(';') : '';
+
+                    return [
+                        escapeCsvField(video.title),
+                        escapeCsvField(video.channelTitle),
+                        video.videoId,
+                        video.url,
+                        formatDateForCSV(video.publishedAt),
+                        video.durationSeconds,
+                        video.viewCount,
+                        video.likeCount,
+                        video.commentCount,
+                        likeRate,
+                        videoType,
+                        escapeCsvField(hashtags),
+                        escapeCsvField(appState.currentFilters.keyword || ''),
+                        escapeCsvField(getRegionName(appState.currentFilters.region)),
+                        exportTime,
+                        escapeCsvField(searchSummary)
+                    ];
+                });
+
+                // 4. 組合 CSV 內容
+                const csvContent = [headers, ...csvRows]
+                    .map(row => row.join(','))
+                    .join('\n');
+
+                // 5. 下載 CSV 檔案
+                downloadCSV(csvContent, generateFileName());
+
+                // 6. 顯示成功訊息
+                showExportSuccess(appState.searchResults.length);
+
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('匯出失敗，請稍後再試');
+            }
+        }
+
+        /**
+         * 轉義 CSV 欄位（處理逗號、引號、換行）
+         */
+        function escapeCsvField(field) {
+            if (field == null) return '';
+
+            const str = String(field);
+
+            // 如果包含逗號、引號或換行，需要用引號包圍並轉義內部引號
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+
+            return str;
+        }
+
+        /**
+         * 格式化日期為 CSV 格式
+         */
+        function formatDateForCSV(dateString) {
+            if (!dateString) return '';
+
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW') + ' ' + date.toLocaleTimeString('zh-TW');
+        }
+
+        /**
+         * 生成搜尋條件摘要
+         */
+        function generateSearchSummary() {
+            const filters = appState.currentFilters;
+            const conditions = [];
+
+            if (filters.keyword) conditions.push(`關鍵字:${filters.keyword}`);
+            if (filters.region) conditions.push(`地區:${getRegionName(filters.region)}`);
+            if (filters.type) conditions.push(`類型:${filters.type === 'shorts' ? 'Shorts' : '一般影片'}`);
+            if (filters.dateFrom) conditions.push(`開始日期:${filters.dateFrom}`);
+            if (filters.dateTo) conditions.push(`結束日期:${filters.dateTo}`);
+            if (filters.viewMin) conditions.push(`最小觀看數:${filters.viewMin.toLocaleString()}`);
+            if (filters.viewMax) conditions.push(`最大觀看數:${filters.viewMax.toLocaleString()}`);
+
+            return conditions.length > 0 ? conditions.join(', ') : '無特定條件';
+        }
+
+        /**
+         * 取得地區中文名稱
+         */
+        function getRegionName(regionCode) {
+            const regionNames = {
+                'TW': '台灣',
+                'US': '美國',
+                'IN': '印度',
+                'BR': '巴西',
+                'ID': '印尼',
+                'MX': '墨西哥'
+            };
+            return regionNames[regionCode] || regionCode || '全球';
+        }
+
+        /**
+         * 生成檔案名稱
+         */
+        function generateFileName() {
+            const now = new Date();
+            const dateStr = now.getFullYear() +
+                          String(now.getMonth() + 1).padStart(2, '0') +
+                          String(now.getDate()).padStart(2, '0') + '_' +
+                          String(now.getHours()).padStart(2, '0') +
+                          String(now.getMinutes()).padStart(2, '0');
+
+            const keyword = appState.currentFilters.keyword || '搜尋結果';
+            const region = getRegionName(appState.currentFilters.region);
+
+            return `YouTube搜尋結果_${keyword}_${region}_${dateStr}.csv`;
+        }
+
+        /**
+         * 下載 CSV 檔案
+         */
+        function downloadCSV(csvContent, fileName) {
+            // 加入 BOM 確保中文正確顯示
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], {
+                type: 'text/csv;charset=utf-8;'
+            });
+
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * 顯示匯出成功訊息
+         */
+        function showExportSuccess(count) {
+            const message = `成功匯出 ${count} 筆影片資料！`;
+
+            // 暫時改變按鈕狀態
+            const exportBtn = elements.exportBtn;
+            const originalText = exportBtn.innerHTML;
+
+            exportBtn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span><span>匯出成功</span>';
+            exportBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            exportBtn.classList.add('bg-green-700');
+
+            setTimeout(() => {
+                exportBtn.innerHTML = originalText;
+                exportBtn.classList.remove('bg-green-700');
+                exportBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            }, 2000);
+        }
+
+        // ==================== 圖表視覺化功能 ====================
+
+        // 全域變數存儲圖表實例
+        let chartInstances = {
+            viewCount: null,
+            publishTrend: null,
+            videoType: null,
+            engagement: null
+        };
+
+        /**
+         * 生成所有圖表
+         */
+        function generateCharts(videos) {
+            if (!videos || videos.length === 0) return;
+
+            try {
+                // 清理舊圖表
+                destroyAllCharts();
+
+                // 生成各種圖表
+                createViewCountChart(videos);
+                createPublishTrendChart(videos);
+                createVideoTypeChart(videos);
+                createEngagementChart(videos);
+
+                // 生成數據洞察
+                generateInsights(videos);
+
+            } catch (error) {
+                console.error('Chart generation error:', error);
+            }
+        }
+
+        /**
+         * 創建觀看數分布圖
+         */
+        function createViewCountChart(videos) {
+            const ctx = document.getElementById('viewCountChart').getContext('2d');
+
+            // 分析觀看數分布
+            const viewRanges = {
+                '< 1萬': 0,
+                '1萬 - 10萬': 0,
+                '10萬 - 100萬': 0,
+                '100萬 - 1000萬': 0,
+                '> 1000萬': 0
+            };
+
+            videos.forEach(video => {
+                const views = video.viewCount;
+                if (views < 10000) viewRanges['< 1萬']++;
+                else if (views < 100000) viewRanges['1萬 - 10萬']++;
+                else if (views < 1000000) viewRanges['10萬 - 100萬']++;
+                else if (views < 10000000) viewRanges['100萬 - 1000萬']++;
+                else viewRanges['> 1000萬']++;
+            });
+
+            chartInstances.viewCount = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(viewRanges),
+                    datasets: [{
+                        label: '影片數量',
+                        data: Object.values(viewRanges),
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f59e0b',
+                            '#ef4444', '#8b5cf6'
+                        ],
+                        borderColor: '#374151',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: '觀看數區間分布',
+                            color: '#f3f4f6'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * 創建發布時間趨勢圖
+         */
+        function createPublishTrendChart(videos) {
+            const ctx = document.getElementById('publishTrendChart').getContext('2d');
+
+            // 按日期分組統計
+            const dateCount = {};
+            videos.forEach(video => {
+                const date = new Date(video.publishedAt).toLocaleDateString('zh-TW');
+                dateCount[date] = (dateCount[date] || 0) + 1;
+            });
+
+            // 排序日期
+            const sortedDates = Object.keys(dateCount).sort((a, b) =>
+                new Date(a) - new Date(b)
+            );
+
+            chartInstances.publishTrend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: '發布影片數',
+                        data: sortedDates.map(date => dateCount[date]),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f3f4f6' }
+                        },
+                        title: {
+                            display: true,
+                            text: '每日發布趨勢',
+                            color: '#f3f4f6'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#9ca3af',
+                                maxRotation: 45
+                            },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * 創建影片類型分布圖
+         */
+        function createVideoTypeChart(videos) {
+            const ctx = document.getElementById('videoTypeChart').getContext('2d');
+
+            // 統計 Shorts vs 一般影片
+            let shortsCount = 0;
+            let normalCount = 0;
+            let shortsViews = 0;
+            let normalViews = 0;
+
+            videos.forEach(video => {
+                if (video.durationSeconds <= 60) {
+                    shortsCount++;
+                    shortsViews += video.viewCount;
+                } else {
+                    normalCount++;
+                    normalViews += video.viewCount;
+                }
+            });
+
+            chartInstances.videoType = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Shorts', '一般影片'],
+                    datasets: [{
+                        data: [shortsCount, normalCount],
+                        backgroundColor: ['#f59e0b', '#3b82f6'],
+                        borderColor: '#374151',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f3f4f6' },
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: `影片類型分布 (平均觀看: Shorts ${Math.round(shortsViews/shortsCount || 0).toLocaleString()}, 一般 ${Math.round(normalViews/normalCount || 0).toLocaleString()})`,
+                            color: '#f3f4f6'
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * 創建按讚率 vs 觀看數散點圖
+         */
+        function createEngagementChart(videos) {
+            const ctx = document.getElementById('engagementChart').getContext('2d');
+
+            const data = videos.map(video => ({
+                x: video.viewCount,
+                y: video.viewCount > 0 ? (video.likeCount / video.viewCount) * 100 : 0,
+                title: video.title.substring(0, 20) + '...'
+            }));
+
+            chartInstances.engagement = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '按讚率 (%)',
+                        data: data,
+                        backgroundColor: '#8b5cf6',
+                        borderColor: '#a855f7',
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f3f4f6' }
+                        },
+                        title: {
+                            display: true,
+                            text: '按讚率與觀看數關係',
+                            color: '#f3f4f6'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return data[context[0].dataIndex].title;
+                                },
+                                label: function(context) {
+                                    return [
+                                        `觀看數: ${context.parsed.x.toLocaleString()}`,
+                                        `按讚率: ${context.parsed.y.toFixed(2)}%`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: '觀看數 (對數軸)',
+                                color: '#f3f4f6'
+                            },
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '按讚率 (%)',
+                                color: '#f3f4f6'
+                            },
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * 生成數據洞察
+         */
+        function generateInsights(videos) {
+            const insights = [];
+
+            // 計算統計數據
+            const totalVideos = videos.length;
+            const totalViews = videos.reduce((sum, v) => sum + v.viewCount, 0);
+            const avgViews = Math.round(totalViews / totalVideos);
+
+            const shortsCount = videos.filter(v => v.durationSeconds <= 60).length;
+            const shortsPercentage = Math.round((shortsCount / totalVideos) * 100);
+
+            const highEngagement = videos.filter(v =>
+                v.viewCount > 0 && (v.likeCount / v.viewCount) > 0.05
+            ).length;
+            const highEngagementPercentage = Math.round((highEngagement / totalVideos) * 100);
+
+            // 找出最熱門的影片
+            const mostPopular = videos.reduce((max, v) =>
+                v.viewCount > max.viewCount ? v : max
+            );
+
+            // 生成洞察
+            insights.push(`📊 共分析 ${totalVideos} 支影片，總觀看數 ${totalViews.toLocaleString()} 次`);
+            insights.push(`📈 平均觀看數為 ${avgViews.toLocaleString()} 次`);
+            insights.push(`🎬 Shorts 占比 ${shortsPercentage}%，一般影片 ${100-shortsPercentage}%`);
+            insights.push(`👍 ${highEngagementPercentage}% 的影片有高互動率 (按讚率 > 5%)`);
+            insights.push(`🏆 最熱門影片：《${mostPopular.title.substring(0, 30)}...》(${mostPopular.viewCount.toLocaleString()} 次觀看)`);
+
+            // 發布時間分析
+            const recentVideos = videos.filter(v => {
+                const daysDiff = (Date.now() - new Date(v.publishedAt)) / (1000 * 60 * 60 * 24);
+                return daysDiff <= 7;
+            }).length;
+
+            if (recentVideos > 0) {
+                insights.push(`🔥 ${Math.round((recentVideos/totalVideos)*100)}% 的影片是最近一週發布的`);
+            }
+
+            // 渲染洞察
+            elements.insightsList.innerHTML = insights.map(insight =>
+                `<div class="text-gray-300 text-sm flex items-start">
+                    <span class="mr-2">${insight.split(' ')[0]}</span>
+                    <span>${insight.substring(insight.indexOf(' ') + 1)}</span>
+                </div>`
+            ).join('');
+        }
+
+        /**
+         * 清理所有圖表實例
+         */
+        function destroyAllCharts() {
+            Object.values(chartInstances).forEach(chart => {
+                if (chart) {
+                    chart.destroy();
+                }
+            });
+            chartInstances = {
+                viewCount: null,
+                publishTrend: null,
+                videoType: null,
+                engagement: null
+            };
+        }
+
+        /**
+         * 切換檢視模式
+         */
+        function switchViewMode(mode) {
+            // 隱藏所有檢視
+            elements.videoGrid.classList.add('hidden');
+            elements.chartView.classList.add('hidden');
+            elements.sortControls.classList.add('hidden');
+
+            // 重置按鈕樣式
+            [elements.gridViewBtn, elements.chartViewBtn].forEach(btn => {
+                btn.classList.remove('bg-red-600', 'text-white');
+                btn.classList.add('text-gray-400');
+            });
+
+            if (mode === 'grid') {
+                elements.videoGrid.classList.remove('hidden');
+                elements.sortControls.classList.remove('hidden');
+                elements.gridViewBtn.classList.add('bg-red-600', 'text-white');
+                elements.gridViewBtn.classList.remove('text-gray-400');
+            } else if (mode === 'chart') {
+                elements.chartView.classList.remove('hidden');
+                elements.chartViewBtn.classList.add('bg-red-600', 'text-white');
+                elements.chartViewBtn.classList.remove('text-gray-400');
+                // 每次切換到圖表模式都重新生成，確保使用最新數據
+                generateCharts(appState.searchResults);
+            }
+        }
+
 
         // ==================== 工具函數 ====================
 
@@ -312,12 +1052,14 @@
          * 格式化數字顯示
          */
         function formatNumber(num) {
-            if (num >= 1000000) {
-                return (num / 1000000).toFixed(1) + 'M';
-            } else if (num >= 1000) {
-                return (num / 1000).toFixed(1) + 'K';
+            if (!num || isNaN(num)) return '0';
+            const n = parseInt(num);
+            if (n >= 1000000) {
+                return (n / 1000000).toFixed(1) + 'M';
+            } else if (n >= 1000) {
+                return (n / 1000).toFixed(1) + 'K';
             }
-            return num.toLocaleString();
+            return n.toLocaleString();
         }
 
         /**
@@ -361,10 +1103,14 @@
             elements.apiStatus.className = `text-sm ${className}`;
         }
 
-        // ==================== API 呼叫函數 ====================
+        // ==================== 搜尋流程 ====================
+
+
+
+
 
         /**
-         * 執行搜尋請求
+         * 執行完整搜尋流程
          */
         async function performSearch() {
             if (appState.loading) return;
@@ -379,34 +1125,33 @@
                 const params = collectSearchParams();
                 appState.currentFilters = params;
 
-                // 決定使用哪個 API
-                const useAdvancedFilter = hasAdvancedFilters(params);
-                const apiAction = useAdvancedFilter ? 'filter' : 'search';
+                // 1. 先搜尋影片列表
+                const searchResults = await YOUTUBE_API_UTILS.searchVideos(params);
 
-                // 構建 API URL
-                const url = buildApiUrl(apiAction, params);
-                console.log('API Request:', url);
-
-                // 發送請求
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (!searchResults.items || searchResults.items.length === 0) {
+                    handleSearchResponse({ items: [], total: 0 });
+                    updateApiStatus('搜尋完成', 'text-green-400');
+                    return;
                 }
 
-                const data = await response.json();
+                // 2. 取得影片詳細資訊
+                const videoIds = searchResults.items.map(item => item.id.videoId);
+                const videoDetails = await YOUTUBE_API_UTILS.getVideoDetails(videoIds);
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                // 3. 合併資料並篩選
+                const videos = YOUTUBE_API_UTILS.mergeVideoData(searchResults.items, videoDetails.items);
+                const filteredVideos = applyViewCountFilter(videos, params);
 
-                // 處理回應
-                handleSearchResponse(data, useAdvancedFilter);
+                // 4. 處理分頁
+                const paginatedResults = {
+                    items: filteredVideos,
+                    total: filteredVideos.length,
+                    pageInfo: searchResults.pageInfo,
+                    nextPageToken: searchResults.nextPageToken,
+                    prevPageToken: searchResults.prevPageToken
+                };
+
+                handleSearchResponse(paginatedResults);
                 updateApiStatus('搜尋完成', 'text-green-400');
 
             } catch (error) {
@@ -416,6 +1161,28 @@
                 appState.loading = false;
                 showLoading(false);
             }
+        }
+
+
+
+
+        /**
+         * 根據觀看數範圍篩選影片
+         */
+        function applyViewCountFilter(videos, params) {
+            return videos.filter(video => {
+                const viewCount = video.viewCount;
+
+                if (params.viewMin && viewCount < params.viewMin) {
+                    return false;
+                }
+
+                if (params.viewMax && viewCount > params.viewMax) {
+                    return false;
+                }
+
+                return true;
+            });
         }
 
         /**
@@ -436,61 +1203,32 @@
         }
 
         /**
-         * 檢查是否有進階篩選條件
-         */
-        function hasAdvancedFilters(params) {
-            return params.dateFrom || params.dateTo ||
-                   params.viewMin !== null || params.viewMax !== null ||
-                   params.region || params.type;
-        }
-
-        /**
-         * 構建 API URL
-         */
-        function buildApiUrl(action, params) {
-            const url = new URL(API_CONFIG.baseUrl);
-
-            if (action === 'filter') {
-                url.searchParams.append('action', 'filter');
-                if (params.keyword) url.searchParams.append('keyword', params.keyword);
-                if (params.region) url.searchParams.append('region', params.region);
-                if (params.type) url.searchParams.append('type', params.type);
-                if (params.dateFrom) url.searchParams.append('dateFrom', params.dateFrom);
-                if (params.dateTo) url.searchParams.append('dateTo', params.dateTo);
-                if (params.viewMin !== null) url.searchParams.append('viewMin', params.viewMin);
-                if (params.viewMax !== null) url.searchParams.append('viewMax', params.viewMax);
-                url.searchParams.append('page', params.page);
-                url.searchParams.append('size', params.size);
-            } else {
-                // 基本搜尋
-                if (params.keyword) url.searchParams.append('q', params.keyword);
-                if (params.region) url.searchParams.append('regionCode', params.region);
-                if (params.type === 'shorts') url.searchParams.append('shorts', 'true');
-                url.searchParams.append('max', params.size);
-                url.searchParams.append('days', '7'); // 預設搜尋 7 天
-            }
-
-            return url;
-        }
-
-        /**
          * 處理搜尋回應
          */
-        function handleSearchResponse(data, isAdvancedFilter) {
-            if (isAdvancedFilter) {
-                // 進階篩選回應格式
-                appState.searchResults = data.items || [];
-                appState.totalResults = data.total || 0;
+        function handleSearchResponse(data) {
+            appState.searchResults = data.items || [];
+            appState.totalResults = data.total || 0;
 
-                updateResultStats(data.total, data.page, data.size);
-                updatePagination(data.page, data.totalPages, data.total, data.size);
+            updateResultStats(data.total || 0, appState.currentPage, appState.pageSize);
+
+            if (data.nextPageToken || data.prevPageToken) {
+                // 有分頁 token，顯示分頁控制
+                const totalPages = Math.ceil(data.total / appState.pageSize);
+                updatePagination(appState.currentPage, totalPages, data.total, appState.pageSize);
             } else {
-                // 基本搜尋回應格式
-                appState.searchResults = data.items || [];
-                appState.totalResults = data.count || 0;
+                // 沒有分頁資訊，隱藏分頁控制
+                elements.paginationContainer.classList.add('hidden');
+            }
 
-                updateResultStats(data.count, 1, data.count);
-                elements.paginationContainer.classList.add('hidden'); // 基本搜尋不分頁
+            // 顯示或隱藏匯出按鈕、檢視模式切換和排序控件
+            if (appState.searchResults.length > 0) {
+                elements.exportSection.classList.remove('hidden');
+                elements.viewModeSection.classList.remove('hidden');
+                elements.sortControls.classList.remove('hidden');
+            } else {
+                elements.exportSection.classList.add('hidden');
+                elements.viewModeSection.classList.add('hidden');
+                elements.sortControls.classList.add('hidden');
             }
 
             displayResults(appState.searchResults);
@@ -513,6 +1251,48 @@
         }
 
         /**
+         * 排序影片結果
+         */
+        function sortVideos(videos, sortBy, sortOrder) {
+            if (!videos || videos.length === 0) return videos;
+
+            const sortedVideos = [...videos].sort((a, b) => {
+                let aValue, bValue;
+
+                switch (sortBy) {
+                    case 'viewCount':
+                        aValue = parseInt(a.viewCount) || 0;
+                        bValue = parseInt(b.viewCount) || 0;
+                        break;
+                    case 'likeCount':
+                        aValue = parseInt(a.likeCount) || 0;
+                        bValue = parseInt(b.likeCount) || 0;
+                        break;
+                    case 'commentCount':
+                        aValue = parseInt(a.commentCount) || 0;
+                        bValue = parseInt(b.commentCount) || 0;
+                        break;
+                    case 'publishedAt':
+                        aValue = new Date(a.publishedAt);
+                        bValue = new Date(b.publishedAt);
+                        break;
+                    case 'relevance':
+                    default:
+                        // 相關性排序保持原始順序
+                        return 0;
+                }
+
+                if (sortOrder === 'asc') {
+                    return aValue - bValue;
+                } else {
+                    return bValue - aValue;
+                }
+            });
+
+            return sortedVideos;
+        }
+
+        /**
          * 顯示搜尋結果
          */
         function displayResults(videos) {
@@ -524,10 +1304,15 @@
                 return;
             }
 
+            // 排序影片結果
+            const sortBy = elements.sortBySelect.value;
+            const sortOrder = elements.sortOrderSelect.value;
+            const sortedVideos = sortVideos(videos, sortBy, sortOrder);
+
             elements.videoGrid.classList.remove('hidden');
             elements.noResults.classList.add('hidden');
 
-            videos.forEach(video => {
+            sortedVideos.forEach(video => {
                 const videoCard = createVideoCard(video);
                 elements.videoGrid.appendChild(videoCard);
             });
@@ -668,6 +1453,8 @@
          */
         function goToPage(page) {
             appState.currentPage = page;
+            // 切換到網格檢視並執行搜尋
+            switchViewMode('grid');
             performSearch();
         }
 
@@ -699,6 +1486,8 @@
                 appState.currentPage = 1;
                 // 只有在有搜尋結果時才重新搜尋
                 if (appState.totalResults > 0) {
+                    // 切換到網格檢視並執行搜尋
+                    switchViewMode('grid');
                     performSearch();
                 }
             });
@@ -714,9 +1503,37 @@
                 goToPage(appState.currentPage + 1);
             });
 
+            // API Key 設定按鈕
+            elements.apiKeyBtn.addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+
             // 重新整理按鈕
             elements.refreshBtn.addEventListener('click', () => {
                 location.reload();
+            });
+
+            // 登出按鈕
+            elements.logoutBtn.addEventListener('click', logout);
+
+            // 匯出按鈕
+            elements.exportBtn.addEventListener('click', exportToCSV);
+
+            // 檢視模式切換
+            elements.gridViewBtn.addEventListener('click', () => switchViewMode('grid'));
+            elements.chartViewBtn.addEventListener('click', () => switchViewMode('chart'));
+
+            // 排序變更事件監聽器
+            elements.sortBySelect.addEventListener('change', () => {
+                if (appState.searchResults && appState.searchResults.length > 0) {
+                    displayResults(appState.searchResults);
+                }
+            });
+
+            elements.sortOrderSelect.addEventListener('change', () => {
+                if (appState.searchResults && appState.searchResults.length > 0) {
+                    displayResults(appState.searchResults);
+                }
             });
         }
 
@@ -731,10 +1548,10 @@
             elements.dateTo.value = today.toISOString().split('T')[0];
             elements.dateFrom.value = weekAgo.toISOString().split('T')[0];
 
-            // 檢查 API URL 是否已設定
-            if (API_CONFIG.baseUrl.includes('YOUR_SCRIPT_ID')) {
-                showError('請在程式碼中設定正確的 Google Apps Script URL');
-                updateApiStatus('未設定 API', 'text-red-400');
+            // 檢查 API Key 是否有效
+            if (!YOUTUBE_API_UTILS.hasApiKey()) {
+                showError('API Key 遺失，請重新設定');
+                updateApiStatus('API Key 錯誤', 'text-red-400');
                 return;
             }
 
@@ -742,20 +1559,26 @@
         }
 
         /**
-         * 載入搜尋建議
+         * 載入搜尋建議（基於熱門關鍵字）
          */
         async function loadSuggestions() {
             try {
-                const url = new URL(API_CONFIG.baseUrl);
-                url.searchParams.append('action', 'suggestions');
-                url.searchParams.append('type', 'keyword');
+                // 使用一些預設的熱門搜尋建議
+                const defaultSuggestions = [
+                    { text: '台灣' },
+                    { text: 'trending' },
+                    { text: '音樂' },
+                    { text: '遊戲' },
+                    { text: '新聞' },
+                    { text: '料理' },
+                    { text: 'vlog' },
+                    { text: '教學' }
+                ];
 
-                const response = await fetch(url);
-                const data = await response.json();
+                displaySuggestions(defaultSuggestions);
 
-                if (data.suggestions && data.suggestions.length > 0) {
-                    displaySuggestions(data.suggestions.slice(0, 8));
-                }
+                // TODO: 未來可以實作更智慧的建議系統
+                // 例如：基於 YouTube Trends API 或 Google Trends
             } catch (error) {
                 console.error('Failed to load suggestions:', error);
             }
