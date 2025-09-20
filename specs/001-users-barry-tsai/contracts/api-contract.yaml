@@ -1,0 +1,406 @@
+openapi: 3.0.3
+info:
+  title: YouTube 熱門影片搜尋器 API
+  description: 提供 YouTube 熱門影片搜尋、篩選和分頁功能的 API
+  version: 1.0.0
+  contact:
+    name: YouTube 熱門影片搜尋器
+    url: https://github.com/user/light-youtube-trend-tracker
+
+servers:
+  - url: https://script.google.com/macros/s/{SCRIPT_ID}/exec
+    description: Google Apps Script 部署環境
+
+paths:
+  /:
+    get:
+      summary: 主要 API 端點
+      description: 根據 action 參數路由到不同的功能
+      parameters:
+        - name: action
+          in: query
+          description: API 操作類型
+          required: false
+          schema:
+            type: string
+            enum: [search, filter, suggestions]
+            default: search
+
+        # 搜尋參數 (action=search)
+        - name: q
+          in: query
+          description: 搜尋關鍵字
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+
+        - name: regionCode
+          in: query
+          description: 地區代碼
+          required: false
+          schema:
+            type: string
+            enum: [TW, US, IN, BR, ID, MX]
+
+        - name: days
+          in: query
+          description: 搜尋天數範圍
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 7
+            default: 2
+
+        - name: max
+          in: query
+          description: 最大結果數量
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+
+        - name: shorts
+          in: query
+          description: 是否只搜尋 Shorts
+          required: false
+          schema:
+            type: string
+            enum: ["true", "false"]
+            default: "false"
+
+        # 篩選參數 (action=filter)
+        - name: dateFrom
+          in: query
+          description: 開始日期 (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+
+        - name: dateTo
+          in: query
+          description: 結束日期 (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+
+        - name: viewMin
+          in: query
+          description: 最小觀看數
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+
+        - name: viewMax
+          in: query
+          description: 最大觀看數
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+
+        - name: region
+          in: query
+          description: 地區篩選
+          required: false
+          schema:
+            type: string
+            enum: [TW, US, IN, BR, ID, MX]
+
+        - name: type
+          in: query
+          description: 影片類型篩選
+          required: false
+          schema:
+            type: string
+            enum: [videos, shorts]
+
+        - name: page
+          in: query
+          description: 頁碼
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+
+        - name: size
+          in: query
+          description: 每頁筆數
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+
+      responses:
+        '200':
+          description: 成功回應
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SearchResponse'
+                  - $ref: '#/components/schemas/FilterResponse'
+                  - $ref: '#/components/schemas/SuggestionsResponse'
+
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '429':
+          description: API 配額限制
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '500':
+          description: 伺服器內部錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Video:
+      type: object
+      required:
+        - videoId
+        - title
+        - channelTitle
+        - publishedAt
+        - viewCount
+        - likeCount
+        - commentCount
+        - url
+      properties:
+        videoId:
+          type: string
+          description: YouTube 影片 ID
+          example: "dQw4w9WgXcQ"
+        title:
+          type: string
+          description: 影片標題
+          maxLength: 200
+          example: "Rick Astley - Never Gonna Give You Up"
+        channelTitle:
+          type: string
+          description: 頻道名稱
+          maxLength: 100
+          example: "RickAstleyVEVO"
+        publishedAt:
+          type: string
+          format: date-time
+          description: 發布時間
+          example: "2009-10-25T06:57:33Z"
+        viewCount:
+          type: integer
+          minimum: 0
+          description: 觀看次數
+          example: 1234567890
+        likeCount:
+          type: integer
+          minimum: 0
+          description: 按讚次數
+          example: 12345678
+        commentCount:
+          type: integer
+          minimum: 0
+          description: 留言次數
+          example: 123456
+        durationSeconds:
+          type: integer
+          minimum: 0
+          description: 影片長度（秒）
+          example: 213
+        region:
+          type: string
+          enum: [TW, US, IN, BR, ID, MX]
+          description: 地區代碼
+          example: "US"
+        type:
+          type: string
+          enum: [videos, shorts]
+          description: 影片類型
+          example: "videos"
+        hashtags:
+          type: array
+          items:
+            type: string
+          description: 標籤列表
+          example: ["#rickroll", "#classic", "#80s"]
+        url:
+          type: string
+          format: uri
+          description: YouTube 連結
+          example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        thumbnails:
+          type: object
+          properties:
+            medium:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                width:
+                  type: integer
+                height:
+                  type: integer
+
+    SearchResponse:
+      type: object
+      required:
+        - query
+        - count
+        - items
+      properties:
+        query:
+          type: string
+          description: 搜尋關鍵字
+          example: "music"
+        keywords:
+          type: array
+          items:
+            type: string
+          description: 篩選關鍵字
+          example: ["ai", "chatgpt"]
+        publishedAfter:
+          type: string
+          format: date-time
+          description: 發布時間下限
+        publishedBefore:
+          type: string
+          format: date-time
+          description: 發布時間上限
+        count:
+          type: integer
+          minimum: 0
+          description: 結果數量
+          example: 25
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+          description: 影片列表
+
+    FilterResponse:
+      type: object
+      required:
+        - total
+        - page
+        - size
+        - totalPages
+        - items
+        - filters
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: 總筆數
+          example: 150
+        page:
+          type: integer
+          minimum: 1
+          description: 當前頁碼
+          example: 1
+        size:
+          type: integer
+          minimum: 1
+          description: 每頁筆數
+          example: 20
+        totalPages:
+          type: integer
+          minimum: 1
+          description: 總頁數
+          example: 8
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+          description: 影片列表
+        filters:
+          type: object
+          description: 套用的篩選條件
+          properties:
+            dateFrom:
+              type: string
+              format: date
+            dateTo:
+              type: string
+              format: date
+            viewMin:
+              type: integer
+              minimum: 0
+            viewMax:
+              type: integer
+              minimum: 0
+            region:
+              type: string
+              enum: [TW, US, IN, BR, ID, MX]
+            type:
+              type: string
+              enum: [videos, shorts]
+
+    SuggestionsResponse:
+      type: object
+      required:
+        - suggestions
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+                description: 建議文字
+              type:
+                type: string
+                enum: [keyword, channel, hashtag]
+                description: 建議類型
+              count:
+                type: integer
+                description: 相關影片數量
+          description: 搜尋建議列表
+          example:
+            - text: "AI 教學"
+              type: "keyword"
+              count: 45
+            - text: "#ChatGPT"
+              type: "hashtag"
+              count: 23
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: 錯誤訊息
+          example: "Invalid date range"
+        code:
+          type: string
+          description: 錯誤代碼
+          example: "INVALID_PARAMS"
+        timestamp:
+          type: string
+          format: date-time
+          description: 錯誤發生時間
+          example: "2025-09-19T10:30:00Z"
+        details:
+          type: object
+          description: 詳細錯誤資訊

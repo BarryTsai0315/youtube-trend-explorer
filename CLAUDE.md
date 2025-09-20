@@ -235,3 +235,44 @@ claude mcp add --transport http grep https://mcp.grep.app
 ```bash
 claude mcp add spec-workflow-mcp -s user -- npx -y spec-workflow-mcp@latest
 ```
+
+## 專案技術堆疊
+
+### YouTube 熱門影片搜尋器 (當前功能)
+
+**架構概述**: 基於 Google Apps Script 的 YouTube 資料追蹤和搜尋系統
+
+**技術組件**:
+- **後端**: Google Apps Script (JavaScript ES6+)
+- **前端**: HTML5/CSS3/JavaScript + Tailwind CSS
+- **API**: YouTube Data API v3
+- **儲存**: Google Sheets (階層式檔案結構)
+- **部署**: Google Apps Script Web App
+
+**核心功能**:
+- YouTube 影片搜尋和篩選
+- 多地區支援 (TW, US, IN, BR, ID, MX)
+- 即時分頁和排序
+- 觀看數、按讚數、留言數追蹤
+- Hashtag 提取和分析
+
+**資料模型**:
+- Video Entity: videoId, title, stats, metadata
+- SearchFilter Entity: 篩選條件和分頁參數
+- SearchResult Entity: 結果集合和分頁資訊
+
+**API 端點**:
+- `GET /?action=search` - 基本搜尋
+- `GET /?action=filter` - 進階篩選
+- `GET /?action=suggestions` - 搜尋建議
+
+**效能約束**:
+- Google Apps Script 執行時間限制: 6分鐘
+- YouTube API 配額: 10,000 units/day
+- 分頁限制: 最大 100 筆/頁
+
+**最新進展 (2025-09-19)**:
+- 完成功能規格設計 (FR-001 至 FR-012)
+- 建立 API 合約和測試框架
+- 定義統一的資料模型
+- 設計漸進式改進架構策略
